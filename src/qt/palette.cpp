@@ -11,42 +11,42 @@ void palette::flip_right() { _page_index = std::max(_page_index + 1, 256 / (_pag
 void palette::zoom_in() { _zoom_level = std::clamp(_zoom_level + 1, 0, 3); }
 void palette::zoom_out() { _zoom_level = std::clamp(_zoom_level - 1, 0, 3); }
 rgba& palette::get(size_t index) {
-    u8 side_len = 2 << _zoom_level;
-    size_t offset = _page_index * side_len;
-    assertion(index < _page_index + (side_len * side_len), "Attempted access out of visible range");
-    return _colors[offset + index];
+	u8 side_len = 2 << _zoom_level;
+	size_t offset = _page_index * side_len;
+	assertion(index < _page_index + (side_len * side_len), "Attempted access out of visible range");
+	return _colors[offset + index];
 }
 
 void palette::paintEvent(QPaintEvent*) {
-    QPainter painter(this);
-    painter.setPen(QPen());
+	QPainter painter(this);
+	painter.setPen(QPen());
 
-    u8 size = (2 << _zoom_level);
-    int square_size = ((std::min(width(), height()) - 1) / size) - 1;
-    int total_size = (square_size + 1) * size + 1;
+	u8 size = (2 << _zoom_level);
+	int square_size = ((std::min(width(), height()) - 1) / size) - 1;
+	int total_size = (square_size + 1) * size + 1;
 
-    painter.setBrush(QBrush(QColor(0, 255, 255)));
-    painter.drawRect(QRect(0, 0,  total_size, total_size));
+	painter.setBrush(QBrush(QColor(0, 255, 255)));
+	painter.drawRect(QRect(0, 0,  total_size, total_size));
 
-    for (int i = 0; i < size * size; i++) {
-        rgba& c = get(i);
-        painter.setBrush(QBrush(QColor(c.r, c.g, c.b)));
-        int x_pos = (i % size) * (square_size + 1) + 1;
-        int y_pos = (i / size) * (square_size + 1) + 1;
-        painter.drawRect(QRect(x_pos, y_pos,  square_size, square_size));
-    }
+	for (int i = 0; i < size * size; i++) {
+		rgba& c = get(i);
+		painter.setBrush(QBrush(QColor(c.r, c.g, c.b)));
+		int x_pos = (i % size) * (square_size + 1) + 1;
+		int y_pos = (i / size) * (square_size + 1) + 1;
+		painter.drawRect(QRect(x_pos, y_pos,  square_size, square_size));
+	}
 }
 
 void palette::mouseDoubleClickEvent(QMouseEvent* e) {
-    u8 tiles_per_side = 2 << _zoom_level;
-    u8 pixels_per_square = std::min(height(), width()) / tiles_per_side;
-    int x_index = (e->x() / pixels_per_square);
-    int y_index = (e->y() / pixels_per_square);
-    auto* p = new picker(this, _colors[x_index + (y_index * tiles_per_side)]);
-    p->show();
+	u8 tiles_per_side = 2 << _zoom_level;
+	u8 pixels_per_square = std::min(height(), width()) / tiles_per_side;
+	int x_index = (e->x() / pixels_per_square);
+	int y_index = (e->y() / pixels_per_square);
+	auto* p = new picker(this, _colors[x_index + (y_index * tiles_per_side)]);
+	p->show();
 
-    connect(p, &picker::value_changed, [=] (hsv d) {
-        _colors[x_index + (y_index * tiles_per_side)] = to_rgb(d);
-        repaint();
-    });
+	connect(p, &picker::value_changed, [=] (hsv d) {
+		_colors[x_index + (y_index * tiles_per_side)] = to_rgb(d);
+		repaint();
+	});
 }
