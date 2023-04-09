@@ -1,12 +1,8 @@
 #ifndef TOOL_H
 #define TOOL_H
 
-#include <common/coordinate_types.h>
+#include <core/selection.h> 
 #include <vector>
-
-struct diff {
-    std::vector<vec2D<u16>> draw_buffer;
-};
 
 class tool {
 public:

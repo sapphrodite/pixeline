@@ -20,7 +20,7 @@ private:
 
     ::rect<u16> get_canvas_box();
     vec2D<i32> imagespace_coords(QMouseEvent*);
-    void apply_diff(const diff& d);
+    void apply_diff(diff& d);
 };
 
 #endif // CANVAS_H

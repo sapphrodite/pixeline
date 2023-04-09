@@ -16,7 +16,7 @@ class grid_parent;
 class picker : public QDialog {
     Q_OBJECT
 public:
-    picker(QWidget* parent, color rgb_in);
+    picker(QWidget* parent, rgba rgb_in);
 private:
     colormap* sliders[3];
     QDoubleSpinBox* hsv_boxes[3];
@@ -26,12 +26,12 @@ private:
     grid_parent* grid;
 
     hsv hsv_color;
-    color rgb_color;
+    rgba rgb_color;
 
     bool ignore_updates;
     void update_color(hsv);
-    void update_color(color);
-    void _update_color_impl(hsv, color);
+    void update_color(rgba);
+    void _update_color_impl(hsv, rgba);
     QVBoxLayout* _add_hsv_sliders();
 signals:
     void value_changed(hsv);

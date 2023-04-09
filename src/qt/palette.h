@@ -7,7 +7,7 @@
 class palette : public QWidget {
     Q_OBJECT
 public:
-    color& get(size_t index);
+    rgba& get(size_t index);
     void flip_left();
     void flip_right();
     void zoom_in();
@@ -16,7 +16,7 @@ public:
     void mouseDoubleClickEvent( QMouseEvent * e ) override;
     void paintEvent(QPaintEvent *event) override;
 private:
-    color _colors[256];
+    rgba _colors[256];
     u8 _page_index = 0;
     u8 _zoom_level = 1;
 };

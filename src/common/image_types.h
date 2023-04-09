@@ -29,10 +29,10 @@ public:
     }
 };
 
-struct color {
+struct rgba {
     u8 r, g, b, a;
-    color() = default;
-    color(u8 r_in, u8 g_in, u8 b_in, u8 a_in) : r(r_in), g(g_in), b(b_in), a(a_in) {}
+    rgba() = default;
+    rgba(u8 r_in, u8 g_in, u8 b_in, u8 a_in) : r(r_in), g(g_in), b(b_in), a(a_in) {}
 
     u8& operator[](size_t index) {
         switch(index) {
@@ -50,11 +50,11 @@ struct image_wrapper {
 public:
     image_wrapper() = default;
     image_wrapper(T data_in, vec2D<u16> size_in) : _data(data_in), _size(size_in) {}
-    color get(size_t i) {
+    rgba get(size_t i) {
      //   assertion(i * 4 + 3 < _data.size(), "Cannot write out of bounds");
-        return color{_data[i * 4], _data[i * 4 + 1], _data[i * 4 + 2], _data[i * 4 + 3]};
+        return rgba{_data[i * 4], _data[i * 4 + 1], _data[i * 4 + 2], _data[i * 4 + 3]};
     }
-    void write(size_t i, color c) {
+    void write(size_t i, rgba c) {
        // assertion(i * 4 + 3 < _data.size(), "Cannot write out of bounds");
         _data[i * 4] = c.r;
         _data[i * 4 + 1] = c.g;
@@ -76,7 +76,7 @@ private:
 using image = image_wrapper<std::vector<u8>>;
 using framebuffer = image_wrapper<u8*>;
 
-static color to_rgb(hsv hsv_in) {
+static rgba to_rgb(hsv hsv_in) {
     hsv_in.s /= 100.0f;
     hsv_in.v /= 100.0f;
 
@@ -115,10 +115,10 @@ static color to_rgb(hsv hsv_in) {
         bp = x;
     }
 
-    return color((rp + m) * 255, (gp + m) * 255, (bp + m) * 255, 255);
+    return rgba((rp + m) * 255, (gp + m) * 255, (bp + m) * 255, 255);
 }
 
-static hsv to_hsv(color rgb_in) {
+static hsv to_hsv(rgba rgb_in) {
     f32 rp = rgb_in.r / 255.0f;
     f32 gp = rgb_in.g / 255.0f;
     f32 bp = rgb_in.b / 255.0f;

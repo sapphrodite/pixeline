@@ -19,7 +19,7 @@ void canvas::paintEvent(QPaintEvent*) {
 
     for (int y = 0; y < _data.size().y; y++) {
         for (int x = 0; x < _data.size().x; x++) {
-            color c = _data.get(x + (y * _data.size().x));
+            rgba c = _data.get(x + (y * _data.size().x));
             painter.setBrush(QBrush(QColor(c.r, c.g, c.b)));
             painter.drawRect(QRect(box.origin.x + x * _zoom, box.origin.y + y * _zoom,  _zoom, _zoom));
         }
@@ -51,16 +51,16 @@ vec2D<i32> canvas::imagespace_coords(QMouseEvent* e) {
     return vec2D<i32>(p.x / _zoom, p.y / _zoom);
 }
 
-void canvas::apply_diff(const diff& d) {
-    for (auto pixel : d.draw_buffer) {
+void canvas::apply_diff(diff& d) {
+    for (auto [pixel, color] : d) {
         if (pixel.x < _data.size().x && pixel.y < _data.size().y) {
             size_t index = pixel.x + (_data.size().x * pixel.y);
-            _data.write(index, color(0, 0, 0, 0));
+            _data.write(index, rgba{0, 0, 0, 0});
         }
     }
 
-    if (d.draw_buffer.size() > 0) {
+//    if (d.size() > 0) {
         repaint();
-    }
+  //  }
 }
 

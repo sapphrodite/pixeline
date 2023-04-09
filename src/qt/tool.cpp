@@ -3,7 +3,7 @@
 void add_pixel(vec2D<i32> px, rect<i32> bound, diff& d) {
     if (px.x >= bound.top_left().x && px.y >= bound.top_left().y 
         && px.y < bound.bottom_right().y && px.x < bound.bottom_right().x)
-   d.draw_buffer.emplace_back(vec2D<u16>(px.x, px.y));
+   d.insert(vec2D<u16>(px.x, px.y), rgba{0, 0, 0, 0});
 }
 
 // Brensham's algorithm
