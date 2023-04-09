@@ -79,7 +79,7 @@ public:
 		}
 
 		bool pte() { return _path.value() >> (_ctr->_depth * (2 * step_width)); }
-		bool is_valid_chunk(node ch) {  return _ctr->_chunks[ch].size() != 0; }
+		bool is_valid_chunk(node ch) {  return ch < _ctr->_chunks.size() && _ctr->_chunks[ch].size() != 0; }
 	};
 
 
@@ -127,6 +127,9 @@ public:
 	}
 
 	T* chunk_at(vec2D<u16> pos) {
+		if (!inbounds(pos))
+			return nullptr;
+
 		path_record path = path_to(pos);
 		node current = _root;
 		for (int i = 0; i < _depth; i++) {

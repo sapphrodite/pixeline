@@ -2,12 +2,14 @@
 #include <QBoxLayout>
 #include <QPushButton>
 #include <QSplitter>
+#include <QShortcut>
 
 #include "qt/palette.h"
 #include "qt/canvas.h"
 #include "qt/picker.h"
 
 #include "core/selection.h"
+#include "core/api.h"
 #include <cstdio>
 #include <assert.h>
 
@@ -137,11 +139,14 @@ QWidget* leftpane(palette& p) {
 }
 
 int main(int argc, char *argv[]) {
+	handle* hnd = handle_alloc();
+	new_image(hnd, 100, 100);
+
 	tests();
 	QApplication a(argc, argv);
 	auto* main_panes = new QSplitter(Qt::Orientation::Horizontal);
 	palette p;
-	canvas c;
+	canvas c(hnd);
 
 	p.get(0) = rgba(255, 9, 255, 255);
 	p.get(1) = rgba(2, 9, 50, 255);
@@ -154,5 +159,16 @@ int main(int argc, char *argv[]) {
 	main_panes->addWidget(leftpane(p));
 	main_panes->addWidget(&c);
 	main_panes->show();
+
+	auto* undohook = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Z), main_panes);
+	auto* redohook = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), main_panes);
+	QObject::connect(undohook, &QShortcut::activated, [&]() {
+		undo(hnd);
+		c.repaint();
+	});
+	QObject::connect(redohook, &QShortcut::activated, [&]() {
+		redo(hnd);
+		c.repaint();
+	});
 	return a.exec();
 }
