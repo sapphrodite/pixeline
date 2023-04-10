@@ -15,11 +15,15 @@ public:
 	void mouseReleaseEvent(QMouseEvent*) override;
 	void mousePressEvent(QMouseEvent*) override;
 	void mouseMoveEvent(QMouseEvent*) override;
+
+public slots:
+	void select_color(u8);
 private:
 	handle* hnd;
 	u8 _zoom;
 	vec2D<i32> last_pos;
 	bool tool_active = false;
+	u8 active_color = 0;
 
 	vec2D<u16> size();
 	::rect<u16> get_canvas_box();

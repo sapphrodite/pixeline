@@ -13,12 +13,15 @@ public:
 	void zoom_in();
 	void zoom_out();
 
-	void mouseDoubleClickEvent( QMouseEvent * e ) override;
 	void paintEvent(QPaintEvent *event) override;
+	void mouseDoubleClickEvent( QMouseEvent * e ) override;
+	void mousePressEvent(QMouseEvent * e ) override;
 private:
 	rgba _colors[256];
 	u8 _page_index = 0;
 	u8 _zoom_level = 1;
+signals:
+	void color_select(u8);
 };
 
 #endif // PALETTE_H

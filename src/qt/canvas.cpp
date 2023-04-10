@@ -35,7 +35,7 @@ void canvas::mousePressEvent(QMouseEvent* e) {
 	if (e->button() == Qt::MouseButton::LeftButton) {
 		tool_active = true;
 		vec2D<i32> new_pos = imagespace_coords(e);
-		pencil(hnd, 0, new_pos.x, new_pos.y, new_pos.x, new_pos.y);
+		pencil(hnd, active_color, new_pos.x, new_pos.y, new_pos.x, new_pos.y);
 		last_pos = new_pos; 
 	} else {
 		tool_active = false;
@@ -48,11 +48,13 @@ void canvas::mousePressEvent(QMouseEvent* e) {
 void canvas::mouseMoveEvent(QMouseEvent* e) {
 	if (tool_active) {
 		vec2D<i32> new_pos = imagespace_coords(e);
-		pencil(hnd, 0, last_pos.x, last_pos.y, new_pos.x, new_pos.y);
+		pencil(hnd, active_color, last_pos.x, last_pos.y, new_pos.x, new_pos.y);
 		last_pos = new_pos; 
 		repaint();
 	}
 }
+
+void canvas::select_color(u8 idx) { active_color = idx; }
 
 vec2D<u16> canvas::size() { 
 	vec2D<u16> retval;

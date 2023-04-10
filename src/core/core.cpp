@@ -122,6 +122,8 @@ void pencil(handle* hnd, palette_idx c, uint16_t x1, uint16_t y1, uint16_t x2, u
 	hnd->canvas.apply_diff(d);
 }
 
+void set_pal_color(handle* hnd, palette_idx c, rgba r) { hnd->palette[c] = r; }
+
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
 void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 
 	*w = hnd->canvas.get_bounds().size.x;

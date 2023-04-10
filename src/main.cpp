@@ -147,15 +147,20 @@ int main(int argc, char *argv[]) {
 	auto* main_panes = new QSplitter(Qt::Orientation::Horizontal);
 	palette p;
 	canvas c(hnd);
+	
+	QObject::connect(&p, &palette::color_select, &c, &canvas::select_color);	
 
-	p.get(0) = rgba(255, 9, 255, 255);
-	p.get(1) = rgba(2, 9, 50, 255);
+	p.get(0) = rgba(1, 0.1, 0.5, 1);
+	p.get(1) = rgba(0, 0, 0, 0);
 	p.get(2) = rgba(25, 9, 255, 255);
 	p.get(3) = rgba(255, 9, 5, 255);
 	p.get(4) = rgba(255, 100, 255, 255);
 	p.get(5) = rgba(55, 100, 255, 255);
 	p.get(6) = rgba(255, 150, 25, 255);
 
+	for (int i= 0; i < 7; i++) {
+		set_pal_color(hnd, i, p.get(i));
+	}	
 	main_panes->addWidget(leftpane(p));
 	main_panes->addWidget(&c);
 	main_panes->show();

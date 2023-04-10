@@ -50,3 +50,11 @@ void palette::mouseDoubleClickEvent(QMouseEvent* e) {
 		repaint();
 	});
 }
+
+void palette::mousePressEvent(QMouseEvent* e) {
+	u8 tiles_per_side = 2 << _zoom_level;
+	u8 pixels_per_square = std::min(height(), width()) / tiles_per_side;
+	int x_index = (e->x() / pixels_per_square);
+	int y_index = (e->y() / pixels_per_square);
+	emit color_select(x_index + (y_index * tiles_per_side));
+}
