@@ -14,7 +14,7 @@ void free(handle*);
 
 void tool_release(handle*);
 void tool_cancel(handle*);
-void pencil(handle*, palette_idx c, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+void pencil(handle*, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 
 void new_image(handle*, uint16_t w, uint16_t h);
 void get_imagesize(handle*, uint16_t* w, uint16_t* h);
