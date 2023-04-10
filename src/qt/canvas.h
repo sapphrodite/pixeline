@@ -19,6 +19,7 @@ private:
 	handle* hnd;
 	u8 _zoom;
 	vec2D<i32> last_pos;
+	bool tool_active = false;
 
 	vec2D<u16> size();
 	::rect<u16> get_canvas_box();

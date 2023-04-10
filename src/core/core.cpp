@@ -112,6 +112,11 @@ void tool_release(handle* hnd) {
 	hnd->canvas.commit();
 };
 
+void tool_cancel(handle* hnd) {
+	hnd->canvas.apply_diff(hnd->canvas.get_diff());
+	hnd->canvas.commit();
+}
+
 void pencil(handle* hnd, palette_idx c, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
 	diff d = draw_line(hnd->palette[c], {x1, y1}, {x2, y2}, hnd->canvas.get_bounds());
 	hnd->canvas.apply_diff(d);

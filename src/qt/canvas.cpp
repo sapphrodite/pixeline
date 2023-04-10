@@ -28,23 +28,30 @@ void canvas::paintEvent(QPaintEvent*) {
 
 void canvas::mouseReleaseEvent(QMouseEvent* e) {
 	tool_release(hnd);	
+	tool_active = false;
 }
 
 void canvas::mousePressEvent(QMouseEvent* e) {
-	if (e->button() == Qt::MouseButton::RightButton) {
-		undo(hnd);
+	if (e->button() == Qt::MouseButton::LeftButton) {
+		tool_active = true;
+		vec2D<i32> new_pos = imagespace_coords(e);
+		pencil(hnd, 0, new_pos.x, new_pos.y, new_pos.x, new_pos.y);
+		last_pos = new_pos; 
+	} else {
+		tool_active = false;
+		tool_cancel(hnd);		
 	}
-	vec2D<i32> new_pos = imagespace_coords(e);
-	pencil(hnd, 0, new_pos.x, new_pos.y, new_pos.x, new_pos.y);
-	last_pos = new_pos; 
+
 	repaint();
 }
 
 void canvas::mouseMoveEvent(QMouseEvent* e) {
-	vec2D<i32> new_pos = imagespace_coords(e);
-	pencil(hnd, 0, last_pos.x, last_pos.y, new_pos.x, new_pos.y);
-	last_pos = new_pos; 
-	repaint();
+	if (tool_active) {
+		vec2D<i32> new_pos = imagespace_coords(e);
+		pencil(hnd, 0, last_pos.x, last_pos.y, new_pos.x, new_pos.y);
+		last_pos = new_pos; 
+		repaint();
+	}
 }
 
 vec2D<u16> canvas::size() { 
