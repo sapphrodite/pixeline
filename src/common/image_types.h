@@ -30,11 +30,11 @@ public:
 };
 
 struct rgba {
-	u8 r, g, b, a;
+	float r = 1, g = 1, b = 1, a = 0;
 	rgba() = default;
-	rgba(u8 r_in, u8 g_in, u8 b_in, u8 a_in) : r(r_in), g(g_in), b(b_in), a(a_in) {}
+	rgba(float r_in, float g_in, float b_in, float a_in) : r(r_in), g(g_in), b(b_in), a(a_in) {}
 
-	u8& operator[](size_t index) {
+	float& operator[](size_t index) {
 		switch(index) {
 			case 0: return r;
 			case 1: return g;
@@ -115,13 +115,13 @@ static rgba to_rgb(hsv hsv_in) {
 		bp = x;
 	}
 
-	return rgba((rp + m) * 255, (gp + m) * 255, (bp + m) * 255, 255);
+	return rgba((rp + m), (gp + m), (bp + m), 1);
 }
 
 static hsv to_hsv(rgba rgb_in) {
-	f32 rp = rgb_in.r / 255.0f;
-	f32 gp = rgb_in.g / 255.0f;
-	f32 bp = rgb_in.b / 255.0f;
+	f32 rp = rgb_in.r;
+	f32 gp = rgb_in.g;
+	f32 bp = rgb_in.b;
 
 	f32 cmax = std::max({rp, gp, bp});
 	f32 cmin = std::min({rp, gp, bp});

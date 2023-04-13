@@ -9,7 +9,6 @@
 
 #include <common/image_types.h>
 
-
 class colormap;
 class grid_parent;
 
@@ -20,7 +19,7 @@ public:
 private:
 	colormap* sliders[3];
 	QDoubleSpinBox* hsv_boxes[3];
-	QSpinBox* rgb_boxes[3];
+	QDoubleSpinBox* rgb_boxes[3];
 	QLineEdit hex_box;
 
 	grid_parent* grid;

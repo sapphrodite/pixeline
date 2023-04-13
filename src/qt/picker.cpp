@@ -40,10 +40,10 @@ picker::picker(QWidget* parent, rgba rgb_in) : QDialog(parent) {
 	auto* rgb_vbox = new QVBoxLayout();
 	for (int i = 0; i < 3; i++) {
 
-		rgb_boxes[i] = new QSpinBox(this);
+		rgb_boxes[i] = new QDoubleSpinBox(this);
 		rgb_boxes[i]->setMaximum(255);
-		connect(rgb_boxes[i], QOverload<int>::of(&QSpinBox::valueChanged), [=](int d){
-			this->rgb_color[i] = d;
+		connect(rgb_boxes[i], QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](int d){
+			this->rgb_color[i] = d / 255.0f;
 			update_color(rgb_color);
 		});
 
@@ -78,7 +78,7 @@ void picker::_update_color_impl(hsv c, rgba c2) {
 		for (int i = 0; i < 3; i++) {
 			sliders[i]->update_color(c);
 			hsv_boxes[i]->setValue(c[hsv::axis(i)]);
-			rgb_boxes[i]->setValue(c2[i]);
+			rgb_boxes[i]->setValue(c2[i] * 255);
 		}
 		grid->impl->update_color(c);
 		ignore_updates = false;
@@ -158,7 +158,7 @@ void color_grid::paintEvent(QPaintEvent*) {
 		for (int x = 0; x < grid_size; x++) {
 			itr_color[x_axis] = std::min(itr_color[x_axis] + steps.x, (hsv::max()[x_axis]));
 			rgba c = to_rgb(itr_color);
-			painter.setBrush(QBrush(QColor(c.r, c.g, c.b)));
+			painter.setBrush(QBrush(QColor(c.r * 255, c.g * 255, c.b * 255)));
 			painter.drawRect(QRect(x * div_size.x, y * div_size.y, div_size.x, div_size.y));
 		}
 		itr_color[x_axis] = x_base;
