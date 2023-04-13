@@ -20,7 +20,9 @@ void new_image(handle*, uint16_t w, uint16_t h);
 void get_imagesize(handle*, uint16_t* w, uint16_t* h);
 const rgba* imagedata(handle*);
 
+#define PALETTE_SIZE 256
 void set_pal_color(handle*, palette_idx c, rgba r);
+rgba get_pal_color(handle*, palette_idx c);
 
 void undo(handle* hnd); 
 void redo(handle* hnd);

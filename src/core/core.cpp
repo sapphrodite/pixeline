@@ -122,7 +122,14 @@ void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int3
 	hnd->canvas.apply_diff(d);
 }
 
-void set_pal_color(handle* hnd, palette_idx c, rgba r) { hnd->palette[c] = r; }
+void set_pal_color(handle* hnd, palette_idx c, rgba r) {
+	assertion(c < PALETTE_SIZE, "Palette index out of range\n");
+	hnd->palette[c] = r; 
+}
+rgba get_pal_color(handle* hnd, palette_idx c) { 
+	assertion(c < PALETTE_SIZE, "Palette index out of range\n");
+	return hnd->palette[c];
+}
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
 void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 

@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 	tests();
 	QApplication a(argc, argv);
 	auto* main_panes = new QSplitter(Qt::Orientation::Horizontal);
-	palette p;
+	palette p(hnd);
 	canvas c(hnd);
 	
 	QObject::connect(&p, &palette::color_select, &c, &canvas::select_color);	
