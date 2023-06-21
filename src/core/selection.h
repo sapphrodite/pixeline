@@ -60,23 +60,15 @@ public:
 
 		const diff_chunk* ctr;
 		chunk_type::iterator bitr;
-		size_t run_idx;
-		size_t len_pos;
 	};
 
 	iterator begin() const { return iterator(this, region.begin(), 0, 0); }
-	iterator end() const { return iterator(this, region.end(), runs.size(), 0); }
+	iterator end() const { return iterator(this, region.end(), 0, 0); }
 private:
 	u8 palette_idx(rgba color);
 	bool same(rgba a, rgba b);
 
-	struct rle {
-		u8 pal_idx;
-		u8 len;
-	};
-
-	std::vector<rgba> colors;
-	std::vector<rle> runs;
+	std::array<rgba, 256> colors;
 	chunk_type region;
 };
 

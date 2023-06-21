@@ -45,60 +45,22 @@ selection::iterator::iterator(const selection* ctr, tree_type::iterator tree_itr
 
 void diff_chunk::insert(size_t index, rgba color) {
 	region.set(index);
-	size_t idx = region.popcnt_before(index);
-
-	// if there's no runs (idx = 0?), just append some shit easy
-	u8 pal_idx = palette_idx(color);
-	size_t pos = 0;
-	for (size_t i = 0; i < runs.size(); i++) {
-		bool same_color = pal_idx == runs[i].pal_idx;
-
-		// append condition -
-		if (idx >= pos && idx <= pos + runs[i].len && same_color) {
-			runs[i].len++;
-			return;
-		}
-
-		// split condition - index is within this run, but has different color
-		// note - bottom bound is inclusive, because if the previous iteration could've appended, iteration would've broken
-		if (pos + runs[i].len > idx && !same_color) {
-			// if we're inserting between runs, it's not actually a split
-			if (idx == pos) {
-				runs.insert(runs.begin() + i, rle{pal_idx, 1});
-				return;
-			}
-			u8 left_size = idx - pos;
-			u8 right_size = runs[i].len - left_size;
-			runs[i].len = left_size;
-			runs.insert(runs.begin() + i + 1, rle{pal_idx, 1});
-			runs.insert(runs.begin() + i + 1, rle{runs[i].pal_idx, right_size});
-			return;
-		}
-
-		pos += runs[i].len;
-	}
-
-	// fallback
-	runs.emplace_back(rle{pal_idx, 1});
+	colors[index] = color;
 }
 
 bool diff_chunk::exists(size_t index) { return region.get(index); }
 
 std::pair<size_t, rgba> diff_chunk::iterator::operator*() const {
-	return std::make_pair(*bitr, ctr->colors[ctr->runs[run_idx].pal_idx]);
+	return std::make_pair(*bitr, ctr->colors[*bitr]);
 }
 
 diff_chunk::iterator diff_chunk::iterator::operator++() {
-	if (++len_pos == ctr->runs[run_idx].len) {
-		run_idx++;
-		len_pos = 0;
-	}
 	++bitr;
 	return *this; 
 }
 
 diff_chunk::iterator::iterator(const diff_chunk* ctr, chunk_type::iterator bitr, size_t run_idx, size_t len_pos)
-		: ctr(ctr), bitr(bitr), run_idx(run_idx), len_pos(len_pos) {}
+		: ctr(ctr), bitr(bitr) {}
 
 u8 diff_chunk::palette_idx(rgba color) {
 	for (size_t i = 0; i < colors.size(); i++) {
@@ -107,7 +69,6 @@ u8 diff_chunk::palette_idx(rgba color) {
 	}
 	
 	// if no match found
-	colors.emplace_back(color);
 	return colors.size() - 1;
 }
 
