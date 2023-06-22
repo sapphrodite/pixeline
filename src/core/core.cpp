@@ -1,6 +1,6 @@
 #include "api.h"
 #include "selection.h"
-#include <common/coordinate_types.h>
+#include <core/coordinate_types.h>
 
 #include <vector>
 #include <array>

@@ -74,8 +74,8 @@ u8 diff_chunk::palette_idx(rgba color) {
 
 bool diff_chunk::same(rgba a, rgba b) {
 	float err = pow(10, -6);
-	return (abs(a.r - b.r) < err && abs(a.g - b.g) < err
-			&& abs(a.b - b.b) < err && abs(a.a - b.a) < err);
+	return (abs(a.r() - b.r()) < err && abs(a.g() - b.g()) < err
+			&& abs(a.b() - b.b()) < err && abs(a.a() - b.a()) < err);
 }
 
 

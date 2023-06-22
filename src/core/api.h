@@ -2,7 +2,7 @@
 #define API_H
 
 #include <stdint.h>
-#include <common/image_types.h>
+#include <core/image_types.h>
 
 
 using palette_idx = uint8_t;

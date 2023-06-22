@@ -2,7 +2,7 @@
 #define SPATIAL_TREE_H
 
 #include <common/integral_types.h>
-#include <common/coordinate_types.h>
+#include <core/coordinate_types.h>
 #include <common/bit.h>
 #include <common/assertion.h>
 

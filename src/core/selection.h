@@ -1,9 +1,9 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include <common/coordinate_types.h>
+#include <core/coordinate_types.h>
 #include <common/bitarray.h>
-#include <common/image_types.h>
+#include <core/image_types.h>
 #include <math.h>
 
 #include "spatial_tree.h"
