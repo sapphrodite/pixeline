@@ -17,6 +17,7 @@ void tool_cancel(handle*);
 void pencil(handle*, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 
 void new_image(handle*, uint16_t w, uint16_t h);
+void load_image(handle*, const char* filename);
 void get_imagesize(handle*, uint16_t* w, uint16_t* h);
 const rgba* imagedata(handle*);
 

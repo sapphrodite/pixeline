@@ -35,7 +35,38 @@ private:
 	f32 data[4];
 };
 
+class image_format {
+public:
+	image_format(bool is_float, int num_channels);
+
+	bool is_float() { return data >> 2; }
+	int num_channels() { return (data & 0x3) + 1; }
+	size_t size_of(int x, int y);
+private:
+	u64 data;
+};
+
+// should prevent copying or moving, copy over the support class
+// I bet you there's a bug that occurs on subsequent calls to read_image :)
+class png_reader {
+public:
+	png_reader(const char* filename);
+	~png_reader();
+
+	image_format get_fmt();
+	size_t width();
+	size_t height();
+	size_t lenbytes();
+	size_t read_image(uint8_t* buf);
+private:
+	size_t rowbytes();
+	struct pimpl;
+	pimpl* data = nullptr;
+};
+
 rgba to_rgb(hsv in);
 hsv to_hsv(rgba in);
+void convert_image_fmt(void* dst, image_format dstfmt, void* src, image_format srcfmt,
+		size_t w, size_t h);
 
 #endif //IMAGE_TYPES_H
