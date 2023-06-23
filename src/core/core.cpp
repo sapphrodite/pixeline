@@ -137,16 +137,17 @@ rgba get_pal_color(handle* hnd, palette_idx c) {
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
 void load_image(handle* hnd, const char* filename) {
-	png_reader fuck(filename);
-	hnd->canvas.new_image(fuck.width(), fuck.height());
+	png_reader png(filename);
+	hnd->canvas.new_image(png.width(), png.height());
 
 	u8 buf[1024];
-	fuck.read_image(buf);
+	png.read_image(buf);
 
-	image_format dstfmt(true, 4);
 	void* dstptr = (void*) hnd->canvas.ptr();
+	image_t srcimage(buf, nullptr, png.get_fmt(), {png.width(), png.height()});
+	image_t dstimage(dstptr, nullptr, image_format(true, 4), {png.width(), png.height()});
 
-	convert_image_fmt(dstptr, dstfmt, buf, fuck.get_fmt(), fuck.width(), fuck.height());
+	convert_image_fmt(dstimage, srcimage);
 }
 
 void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 

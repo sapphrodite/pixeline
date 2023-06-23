@@ -154,12 +154,11 @@ void copy_pixel(void** dst, image_format dstfmt, void** src, image_format srcfmt
 	}
 }
 
-void convert_image_fmt(void* dst, image_format dstfmt, void* src, image_format srcfmt,
-		size_t w, size_t h) {
+void convert_image_fmt(image_t dst, image_t src) {
 	// dest num channels can't be lower than src, not easily
 
-	void* dstptr = dst;
-	void* srcptr = src;
-	for (int i = 0; i < w * h; i++)
-		copy_pixel(&dstptr, dstfmt, &srcptr, srcfmt);
+	void* dstptr = dst.data;
+	void* srcptr = src.data;
+	for (int i = 0; i < src.size.x * src.size.y; i++)
+		copy_pixel(&dstptr, dst.fmt, &srcptr, src.fmt);
 }

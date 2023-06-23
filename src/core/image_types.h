@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <common/integral_types.h>
+#include <core/coordinate_types.h>
 
 struct hsv {
 public:
@@ -46,6 +47,16 @@ private:
 	u64 data;
 };
 
+class image_t {
+	public:
+	image_t(void* data, void* palette, image_format fmt, vec2D<u16> size)
+		: data(data), palette(palette), fmt(fmt), size(size) {}
+	void* data;
+	void* palette;
+	image_format fmt;
+	vec2D<u16> size;
+};
+
 // should prevent copying or moving, copy over the support class
 // I bet you there's a bug that occurs on subsequent calls to read_image :)
 class png_reader {
@@ -66,7 +77,6 @@ private:
 
 rgba to_rgb(hsv in);
 hsv to_hsv(rgba in);
-void convert_image_fmt(void* dst, image_format dstfmt, void* src, image_format srcfmt,
-		size_t w, size_t h);
+void convert_image_fmt(image_t dst, image_t src);
 
 #endif //IMAGE_TYPES_H
