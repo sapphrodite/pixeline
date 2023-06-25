@@ -8,7 +8,7 @@
 #include <QCheckBox>
 
 #include <core/image_types.h>
-#include <core/coordinate_types.h>
+#include <common/coordinate_types.h>
 
 class colormap;
 class grid_parent;

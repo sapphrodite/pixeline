@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <common/integral_types.h>
-#include <core/coordinate_types.h>
+#include <common/coordinate_types.h>
 
 struct hsv {
 public:

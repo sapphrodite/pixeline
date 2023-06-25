@@ -1,7 +1,7 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include <core/coordinate_types.h>
+#include <common/coordinate_types.h>
 #include <common/bitarray.h>
 #include <core/image_types.h>
 #include <math.h>
