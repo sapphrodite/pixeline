@@ -10,33 +10,35 @@ class layer {
 public:
 	void apply_diff(diff& d) {
 		for (auto [pos, color] : d) {
-			size_t addr = (pos.x + pos.y * bounds.size.x) * 4;
+			size_t addr = (pos.x + pos.y * bounds.size.x);
 
 			// if undo diff doesn't have data for the current pixel, back up before overwriting
 			if (!undo_diff.exists(pos)) {
-				rgba temp(data[addr], data[addr + 1], data[addr + 2], data[addr + 3]);
-				undo_diff.insert(pos, temp);
+				undo_diff.insert(pos, data.at(addr));
 			}
 
-			data[addr] = color.r();
-			data[addr + 1] = color.g();
-			data[addr + 2] = color.b();
-			data[addr + 3] = color.a();
+			//data.at(addr) = color.r();
+			//data.at(addr + 3) = color.a();
 		} 
 	}
 
 	void new_image(uint16_t w, uint16_t h) {
-		data = std::vector<f32>(w * h * 4, 0); 
+		data = image_t(canvas_fmt(), vec2D<u16>(w, h));
 		bounds = rect<int32_t>{{0, 0}, {w, h}};
 	}
 
-	const f32* ptr() { return data.data(); }
+	void set_img(image_t img) {
+		data = img;
+		bounds = rect<int32_t>{{0, 0}, img.size.to<int>()};
+	}
+	const f32* ptr() { return (f32*) data.data; }
 	diff& get_diff() { return undo_diff; }
 	void commit() { undo_diff = diff(); }
 	rect<int32_t> get_bounds() { return bounds; }
+	static image_format canvas_fmt() { return image_format(true, 4); }
 private:
 	diff undo_diff;
-	std::vector<f32> data;
+	image_t data;
 	rect<int32_t> bounds;
 };
 
@@ -137,17 +139,8 @@ rgba get_pal_color(handle* hnd, palette_idx c) {
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
 void load_image(handle* hnd, const char* filename) {
-	png_reader png(filename);
-	hnd->canvas.new_image(png.width(), png.height());
-
-	u8 buf[1024];
-	png.read_image(buf);
-
-	void* dstptr = (void*) hnd->canvas.ptr();
-	image_t srcimage(buf, nullptr, png.get_fmt(), {png.width(), png.height()});
-	image_t dstimage(dstptr, nullptr, image_format(true, 4), {png.width(), png.height()});
-
-	convert_image_fmt(dstimage, srcimage);
+	image_t img = png_reader(filename).get_image();
+	hnd->canvas.set_img(img.convert_to(layer::canvas_fmt()));
 }
 
 void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 

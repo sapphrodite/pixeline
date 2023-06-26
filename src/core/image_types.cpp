@@ -1,16 +1,12 @@
 #include "image_types.h"
+
+#include <libpng/png.h>
+#include <cstdio>
+#include <vector>
+#include <stdexcept>
+
 #include <cmath>
 #include <algorithm>
-
-f32& hsv::operator[](size_t idx) {
-	assert(idx < 4);
-	return data[idx];
-}
-
-f32& rgba::operator[](size_t idx) {
-	assert(idx < 5);
-	return data[idx];
-}
 
 rgba to_rgb(hsv in) {
 	in.s() /= 100.0f;
@@ -77,18 +73,72 @@ hsv to_hsv(rgba in) {
 	return hsv(fmod(ret.h(), 360), ret.s() * 100, ret.v() * 100);
 }
 
+
 image_format::image_format(bool is_float, int num_channels) {
 	assert(num_channels > 0);
 	data = (num_channels - 1) & 0x3;
 	data |= (is_float ? 1 : 0) << 2;
 }
-
+bool image_format::is_float() { return data >> 2; }
+int image_format::num_channels() { return (data & 0x3) + 1; }
 size_t image_format::size_of(int x, int y) { return x * y * num_channels(); }
 
-#include <libpng/png.h>
-#include <cstdio>
-#include <vector>
-#include <stdexcept>
+
+image_t::image_t(image_format fmt, vec2D<u16> size) : fmt(fmt), size(size) {
+	if (fmt.is_float()) {
+		f32* buf = new f32[fmt.size_of(size.x, size.y)];
+		data = (void*) buf;
+	} else {
+		u8* buf = new u8[fmt.size_of(size.x, size.y)];
+		data = (void*) buf;
+	}
+
+}
+
+void copy_pixel_itof(f32** dst, image_format dstfmt, u8** src, image_format srcfmt) {
+	int j = 0;
+	for (; j < srcfmt.num_channels(); j++)
+		(*dst)[j] = (f32) (*src)[j] / 255.0;
+	for (int i = j; i < dstfmt.num_channels(); i++)
+		(*dst)[i] = 1;
+	*src += srcfmt.num_channels();
+	*dst += dstfmt.num_channels();
+}
+
+void copy_pixel(void** dst, image_format dstfmt, void** src, image_format srcfmt) {
+	if (dstfmt.is_float() && !srcfmt.is_float()) {
+		copy_pixel_itof((f32**) dst, dstfmt, (u8**) src, srcfmt);
+	} else {
+		throw std::logic_error("Unhandled conversion opertation");
+	}
+}
+
+image_t image_t::convert_to(image_format dstfmt) {
+	image_t dst(dstfmt, size);
+
+	// dest num channels can't be lower than src, not easily
+
+	void* dstptr = dst.data;
+	void* srcptr = this->data;
+	for (int i = 0; i < size.x * size.y; i++)
+		copy_pixel(&dstptr, dst.fmt, &srcptr, fmt);
+
+	return dst;
+}
+
+rgba image_t::at(vec2D<u16> position) {
+	return at(position.x + (position.y * size.x));
+}
+
+rgba image_t::at(size_t idx) {
+	if (fmt.is_float()) {
+		f32* buf = (f32*) data;
+		return rgba{buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]};
+	} else {
+		throw std::logic_error("oops!");
+	}
+}
+
 
 struct png_reader::pimpl {
 	FILE* fp = nullptr;
@@ -118,6 +168,12 @@ png_reader::~png_reader() {
 	delete data;
 }
 
+image_t png_reader::get_image() {
+	image_t img(get_fmt(), vec2D<u16>(width(), height()));
+	read_image((uint8_t*) img.data);
+	return img;
+}
+
 image_format png_reader::get_fmt() { return image_format(false, 3); }
 size_t png_reader::width() { return png_get_image_width(data->png_ptr, data->info_ptr); }
 size_t png_reader::height() { return png_get_image_height(data->png_ptr, data->info_ptr); }
@@ -132,33 +188,3 @@ size_t png_reader::read_image(uint8_t* buf) {
 	return lenbytes();
 }
 size_t png_reader::rowbytes() { return png_get_rowbytes(data->png_ptr, data->info_ptr); }
-
-
-
-
-void copy_pixel_itof(f32** dst, image_format dstfmt, u8** src, image_format srcfmt) {
-	int j = 0;
-	for (; j < srcfmt.num_channels(); j++)
-		(*dst)[j] = (f32) (*src)[j] / 255.0;
-	for (int i = j; i < dstfmt.num_channels(); i++)
-		(*dst)[i] = 1;
-	*src += srcfmt.num_channels();
-	*dst += dstfmt.num_channels();
-}
-
-void copy_pixel(void** dst, image_format dstfmt, void** src, image_format srcfmt) {
-	if (dstfmt.is_float() && !srcfmt.is_float()) {
-		copy_pixel_itof((f32**) dst, dstfmt, (u8**) src, srcfmt);
-	} else {
-		throw std::logic_error("Unhandled conversion opertation");
-	}
-}
-
-void convert_image_fmt(image_t dst, image_t src) {
-	// dest num channels can't be lower than src, not easily
-
-	void* dstptr = dst.data;
-	void* srcptr = src.data;
-	for (int i = 0; i < src.size.x * src.size.y; i++)
-		copy_pixel(&dstptr, dst.fmt, &srcptr, src.fmt);
-}
