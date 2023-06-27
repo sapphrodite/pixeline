@@ -11,16 +11,16 @@ class rgba;
 
 struct hsv {
 public:
-	hsv() = default;
+	constexpr hsv() = default;
 	constexpr hsv(f32 h, f32 s, f32 v) : data(h, s, v) {}
 	static hsv from(const rgba&);
 	static constexpr hsv max() { return hsv(360, 100, 100); }
 
 	f32& operator[](size_t idx) { return data[idx]; };
 
-	f32& h() { return data[0]; }
-	f32& s() { return data[1]; }
-	f32& v() { return data[2]; }
+	f32 h() const { return data[0]; }
+	f32 s() const { return data[1]; }
+	f32 v() const { return data[2]; }
 private:
 	f32 data[3];
 };
@@ -33,10 +33,10 @@ public:
 
 	f32& operator[](size_t idx) { return data[idx]; };
 
-	f32& r() { return data[0]; }
-	f32& g() { return data[1]; }
-	f32& b() { return data[2]; }
-	f32& a() { return data[3]; }
+	f32 r() const { return data[0]; }
+	f32 g() const { return data[1]; }
+	f32 b() const { return data[2]; }
+	f32 a() const { return data[3]; }
 private:
 	f32 data[4];
 };
@@ -56,17 +56,18 @@ private:
 class image_t {
 public:
 	image_t() = default;
-	image_t(void* data, void* palette, image_format fmt, vec2D<u16> size)
-		: data(data), palette(palette), fmt(fmt), size(size) {}
 	image_t(image_format fmt, vec2D<u16> size);
 
 	image_t convert_to(image_format dstfmt);
 
 	rgba at(vec2D<u16>);
 	rgba at(size_t);
-	vec2D<u16> size;
-	void* data;
+
+	vec2D<u16> size() { return _size; }
+	vec2D<u16> data() { return _data; }
 private:
+	vec2D<u16> _size;
+	void* _data;
 	void* palette;
 	image_format fmt;
 };
@@ -90,8 +91,5 @@ private:
 	struct pimpl;
 	pimpl* data = nullptr;
 };
-
-rgba to_rgb(hsv in);
-hsv to_hsv(rgba in);
 
 #endif //IMAGE_TYPES_H

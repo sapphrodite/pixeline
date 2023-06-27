@@ -42,7 +42,7 @@ void palette::mouseDoubleClickEvent(QMouseEvent* e) {
 	p->show();
 
 	connect(p, &picker::value_changed, [=] (hsv d) {
-		set_pal_color(hnd, x_index + (y_index * tiles_per_side), to_rgb(d));
+		set_pal_color(hnd, x_index + (y_index * tiles_per_side), rgba::from(d));
 		repaint();
 	});
 }

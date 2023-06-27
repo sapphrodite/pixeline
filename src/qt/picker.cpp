@@ -35,7 +35,7 @@ QVBoxLayout* picker::_add_hsv_sliders() {
 }
 
 picker::picker(QWidget* parent, rgba rgb_in) : QDialog(parent) {
-	hsv_color = to_hsv(rgb_in);
+	hsv_color = hsv::from(rgb_in);
 	const char* rgb_labels[3] = {"R:", "G:", "B:"};
 	auto* rgb_vbox = new QVBoxLayout();
 	for (int i = 0; i < 3; i++) {
@@ -70,8 +70,8 @@ picker::picker(QWidget* parent, rgba rgb_in) : QDialog(parent) {
 	update_color(hsv_color);
 };
 
-void picker::update_color(hsv c) { _update_color_impl(c, to_rgb(c)); }
-void picker::update_color(rgba c) { _update_color_impl(to_hsv(c), c); }
+void picker::update_color(hsv c) { _update_color_impl(c, rgba::from(c)); }
+void picker::update_color(rgba c) { _update_color_impl(hsv::from(c), c); }
 void picker::_update_color_impl(hsv c, rgba c2) {
 	if (!ignore_updates) {
 		ignore_updates = true;
@@ -110,7 +110,7 @@ void colormap::paintEvent(QPaintEvent*) {
 	div_size = div_size * num_divs;
 
 	for (int x = 0; x < width(); x += num_divs) {
-		rgba c = to_rgb(itr_color);
+		rgba c = rgba::from(itr_color);
 		painter.setBrush(QBrush(QColor(c.r(), c.g(), c.b())));
 		painter.drawRect(QRect(x, 0, num_divs, height()));
 		itr_color[axis] += div_size;
@@ -157,7 +157,7 @@ void color_grid::paintEvent(QPaintEvent*) {
 	for (int y = 0; y < grid_size; y++) {
 		for (int x = 0; x < grid_size; x++) {
 			itr_color[x_axis] = std::min(itr_color[x_axis] + steps.x, (hsv::max()[x_axis]));
-			rgba c = to_rgb(itr_color);
+			rgba c = rgba::from(itr_color);
 			painter.setBrush(QBrush(QColor(c.r() * 255, c.g() * 255, c.b() * 255)));
 			painter.drawRect(QRect(x * div_size.x, y * div_size.y, div_size.x, div_size.y));
 		}
