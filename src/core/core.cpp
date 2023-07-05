@@ -139,7 +139,7 @@ rgba get_pal_color(handle* hnd, palette_idx c) {
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
 void load_image(handle* hnd, const char* filename) {
-	image_t img = png_reader(filename).get_image();
+	image_t img = image_t::from_file(filename);
 	hnd->canvas.set_img(img.convert_to(layer::canvas_fmt()));
 }
 

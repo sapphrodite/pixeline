@@ -57,6 +57,7 @@ class image_t {
 public:
 	image_t() = default;
 	image_t(image_format fmt, vec2D<u16> size);
+	static image_t from_file(const char* filename);
 
 	image_t convert_to(image_format dstfmt);
 
@@ -70,26 +71,6 @@ private:
 	void* _data;
 	void* palette;
 	image_format fmt;
-};
-
-// should prevent copying or moving, copy over the support class
-// I bet you there's a bug that occurs on subsequent calls to read_image :)
-class png_reader {
-public:
-	png_reader(const char* filename);
-	~png_reader();
-
-	image_t get_image();
-
-private:
-	image_format get_fmt();
-	size_t width();
-	size_t height();
-	size_t lenbytes();
-	size_t read_image(uint8_t* buf);
-	size_t rowbytes();
-	struct pimpl;
-	pimpl* data = nullptr;
 };
 
 #endif //IMAGE_TYPES_H

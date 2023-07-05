@@ -8,6 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
+
 image_format::image_format(bool is_float, int num_channels) {
 	assert(num_channels > 0);
 	data = (num_channels - 1) & 0x3;
@@ -47,6 +48,45 @@ void copy_pixel(void** dst, image_format dstfmt, void** src, image_format srcfmt
 	}
 }
 
+image_t image_t::from_file(const char* filename) {
+	FILE* fp = nullptr;
+	png_struct* png_ptr = nullptr;
+	png_info* info_ptr = nullptr;
+
+	fp = fopen(filename, "rb");
+	assert(fp);
+	char header[8]; // 8 is the maximum size that can be checked
+	fread(header, 1, 8, fp);  // This advances the read pointer - do not remove
+
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	info_ptr = png_create_info_struct(png_ptr);
+
+	png_init_io(png_ptr, fp);
+	png_set_sig_bytes(png_ptr, 8);
+	png_read_info(png_ptr, info_ptr);
+	png_read_update_info(png_ptr, info_ptr);
+
+
+	int width = png_get_image_width(png_ptr, info_ptr);
+	int height = png_get_image_height(png_ptr, info_ptr);
+	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+
+	image_format fmt(false, 3);
+
+	image_t img(fmt, vec2D<u16>(width, height));
+
+	// What in the actual fuck is this? thanks libpng
+	std::vector<png_byte*> ptr_storage(height);
+	for (int y = 0; y < height; y++)
+		ptr_storage[y] = (uint8_t*) img.data() + (rowbytes * y);
+	png_read_image(png_ptr, ptr_storage.data());
+
+	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	fclose(fp);
+
+	return img;
+}
+
 image_t image_t::convert_to(image_format dstfmt) {
 	image_t dst(dstfmt, _size);
 
@@ -72,56 +112,6 @@ rgba image_t::at(size_t idx) {
 		throw std::logic_error("oops!");
 	}
 }
-
-
-struct png_reader::pimpl {
-	FILE* fp = nullptr;
-	png_struct* png_ptr = nullptr;
-	png_info* info_ptr = nullptr;
-};
-
-png_reader::png_reader(const char* filename) {
-	data = new pimpl;
-	data->fp = fopen(filename, "rb");
-	assert(data->fp);
-	char header[8]; // 8 is the maximum size that can be checked
-	fread(header, 1, 8, data->fp);  // This advances the read pointer - do not remove
-
-	data->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	data->info_ptr = png_create_info_struct(data->png_ptr);
-
-	png_init_io(data->png_ptr, data->fp);
-	png_set_sig_bytes(data->png_ptr, 8);
-	png_read_info(data->png_ptr, data->info_ptr);
-	png_read_update_info(data->png_ptr, data->info_ptr);
-}
-
-png_reader::~png_reader() {
-	png_destroy_read_struct(&data->png_ptr, &data->info_ptr, NULL);
-	fclose(data->fp);
-	delete data;
-}
-
-image_t png_reader::get_image() {
-	image_t img(get_fmt(), vec2D<u16>(width(), height()));
-	read_image((uint8_t*) img.data());
-	return img;
-}
-
-image_format png_reader::get_fmt() { return image_format(false, 3); }
-size_t png_reader::width() { return png_get_image_width(data->png_ptr, data->info_ptr); }
-size_t png_reader::height() { return png_get_image_height(data->png_ptr, data->info_ptr); }
-size_t png_reader::lenbytes() { return height() * rowbytes(); }
-size_t png_reader::read_image(uint8_t* buf) {
-	// What in the actual fuck is this? thanks libpng
-	std::vector<png_byte*> ptr_storage(height());
-	for (int y = 0; y < height(); y++) {
-		ptr_storage[y] = buf + (rowbytes() * y);
-	}
-	png_read_image(data->png_ptr, ptr_storage.data());
-	return lenbytes();
-}
-size_t png_reader::rowbytes() { return png_get_rowbytes(data->png_ptr, data->info_ptr); }
 
 
 rgba rgba::from(const hsv& a) {
