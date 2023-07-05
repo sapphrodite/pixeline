@@ -18,13 +18,13 @@ int image_format::num_channels() { return (data & 0x3) + 1; }
 size_t image_format::size_of(int x, int y) { return x * y * num_channels(); }
 
 
-image_t::image_t(image_format fmt, vec2D<u16> size) : fmt(fmt), size(size) {
+image_t::image_t(image_format fmt, vec2D<u16> size) : fmt(fmt), _size(size) {
 	if (fmt.is_float()) {
-		f32* buf = new f32[fmt.size_of(size.x, size.y)];
-		data = (void*) buf;
+		f32* buf = new f32[fmt.size_of(_size.x, _size.y)];
+		_data = (void*) buf;
 	} else {
-		u8* buf = new u8[fmt.size_of(size.x, size.y)];
-		data = (void*) buf;
+		u8* buf = new u8[fmt.size_of(_size.x, _size.y)];
+		_data = (void*) buf;
 	}
 
 }
@@ -48,25 +48,25 @@ void copy_pixel(void** dst, image_format dstfmt, void** src, image_format srcfmt
 }
 
 image_t image_t::convert_to(image_format dstfmt) {
-	image_t dst(dstfmt, size);
+	image_t dst(dstfmt, _size);
 
 	// dest num channels can't be lower than src, not easily
 
-	void* dstptr = dst.data;
-	void* srcptr = this->data;
-	for (int i = 0; i < size.x * size.y; i++)
+	void* dstptr = dst.data();
+	void* srcptr = this->data();
+	for (int i = 0; i < size().x * size().y; i++)
 		copy_pixel(&dstptr, dst.fmt, &srcptr, fmt);
 
 	return dst;
 }
 
 rgba image_t::at(vec2D<u16> position) {
-	return at(position.x + (position.y * size.x));
+	return at(position.x + (position.y * size().x));
 }
 
 rgba image_t::at(size_t idx) {
 	if (fmt.is_float()) {
-		f32* buf = (f32*) data;
+		f32* buf = (f32*) data();
 		return rgba{buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]};
 	} else {
 		throw std::logic_error("oops!");
@@ -104,7 +104,7 @@ png_reader::~png_reader() {
 
 image_t png_reader::get_image() {
 	image_t img(get_fmt(), vec2D<u16>(width(), height()));
-	read_image((uint8_t*) img.data);
+	read_image((uint8_t*) img.data());
 	return img;
 }
 

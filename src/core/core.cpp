@@ -29,9 +29,9 @@ public:
 
 	void set_img(image_t img) {
 		data = img;
-		bounds = rect<int32_t>{{0, 0}, img.size.to<int>()};
+		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
 	}
-	const f32* ptr() { return (f32*) data.data; }
+	const f32* ptr() { return (f32*) data.data(); }
 	diff& get_diff() { return undo_diff; }
 	void commit() { undo_diff = diff(); }
 	rect<int32_t> get_bounds() { return bounds; }

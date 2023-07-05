@@ -64,7 +64,7 @@ public:
 	rgba at(size_t);
 
 	vec2D<u16> size() { return _size; }
-	vec2D<u16> data() { return _data; }
+	void* data() { return _data; }
 private:
 	vec2D<u16> _size;
 	void* _data;
