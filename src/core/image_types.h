@@ -3,11 +3,14 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
 #include <common/integral_types.h>
 #include <common/coordinate_types.h>
+#include <common/raii_types.h>
 
 class hsv;
 class rgba;
+
 
 struct hsv {
 public:
@@ -45,32 +48,32 @@ class image_format {
 public:
 	image_format() = default;
 	image_format(bool is_float, int num_channels);
-
 	bool is_float();
 	int num_channels();
 	size_t size_of(int x, int y);
 private:
-	u64 data;
+	u64 data = 0;
 };
 
 class image_t {
 public:
-	image_t() = default;
 	image_t(image_format fmt, vec2D<u16> size);
-	static image_t from_file(const char* filename);
+	image_t();
+	~image_t();
+	image_t& operator=(image_t&& other);
+	image_t(image_t&& other);
 
+	static image_t from_file(const char* filename);
 	image_t convert_to(image_format dstfmt);
 
 	rgba at(vec2D<u16>);
 	rgba at(size_t);
 
-	vec2D<u16> size() { return _size; }
-	void* data() { return _data; }
+	vec2D<u16> size();
+	void* buf();
 private:
-	vec2D<u16> _size;
-	void* _data;
-	void* palette;
-	image_format fmt;
+	struct pimpl;
+	std::unique_ptr<pimpl> data;
 };
 
 #endif //IMAGE_TYPES_H

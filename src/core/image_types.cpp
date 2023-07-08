@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include <cmath>
+#include <variant>
 #include <algorithm>
 
 
@@ -19,15 +20,27 @@ int image_format::num_channels() { return (data & 0x3) + 1; }
 size_t image_format::size_of(int x, int y) { return x * y * num_channels(); }
 
 
-image_t::image_t(image_format fmt, vec2D<u16> size) : fmt(fmt), _size(size) {
-	if (fmt.is_float()) {
-		f32* buf = new f32[fmt.size_of(_size.x, _size.y)];
-		_data = (void*) buf;
-	} else {
-		u8* buf = new u8[fmt.size_of(_size.x, _size.y)];
-		_data = (void*) buf;
-	}
+struct image_t::pimpl {
+	vec2D<u16> size;
+	std::variant<u8*, f32*> data = (u8*) 0x0;
+	image_format fmt;
+};
 
+image_t::~image_t() = default;
+image_t::image_t() = default;
+image_t::image_t(image_t&& other) = default;
+image_t& image_t::operator=(image_t&& other) = default;
+image_t::image_t(image_format fmt, vec2D<u16> size) {
+	data = std::make_unique<image_t::pimpl>();
+	data.get()->fmt = fmt;
+	data.get()->size = size;
+	if (fmt.is_float()) {
+		f32* buf = new f32[fmt.size_of(size.x, size.y)];
+		data.get()->data = buf;
+	} else {
+		u8* buf = new u8[fmt.size_of(size.x, size.y)];
+		data.get()->data = buf;
+	}
 }
 
 void copy_pixel_itof(f32** dst, image_format dstfmt, u8** src, image_format srcfmt) {
@@ -78,7 +91,7 @@ image_t image_t::from_file(const char* filename) {
 	// What in the actual fuck is this? thanks libpng
 	std::vector<png_byte*> ptr_storage(height);
 	for (int y = 0; y < height; y++)
-		ptr_storage[y] = (uint8_t*) img.data() + (rowbytes * y);
+		ptr_storage[y] = (uint8_t*) img.buf() + (rowbytes * y);
 	png_read_image(png_ptr, ptr_storage.data());
 
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -88,14 +101,14 @@ image_t image_t::from_file(const char* filename) {
 }
 
 image_t image_t::convert_to(image_format dstfmt) {
-	image_t dst(dstfmt, _size);
+	image_t dst(dstfmt, data.get()->size);
 
 	// dest num channels can't be lower than src, not easily
 
-	void* dstptr = dst.data();
-	void* srcptr = this->data();
+	void* dstptr = dst.buf();
+	void* srcptr = this->buf();
 	for (int i = 0; i < size().x * size().y; i++)
-		copy_pixel(&dstptr, dst.fmt, &srcptr, fmt);
+		copy_pixel(&dstptr, dst.data.get()->fmt, &srcptr, data.get()->fmt);
 
 	return dst;
 }
@@ -105,13 +118,22 @@ rgba image_t::at(vec2D<u16> position) {
 }
 
 rgba image_t::at(size_t idx) {
-	if (fmt.is_float()) {
-		f32* buf = (f32*) data();
+	if (data.get()->fmt.is_float()) {
+		f32* buf = std::get<f32*>(data.get()->data);
 		return rgba{buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]};
 	} else {
 		throw std::logic_error("oops!");
 	}
 }
+
+vec2D<u16> image_t::size() { return data.get()->size; }
+void* image_t::buf() {
+	if (data.get()->fmt.is_float())
+		return (void*) std::get<float*>(data.get()->data);
+	else
+		return (void*) std::get<u8*>(data.get()->data);
+}
+
 
 
 rgba rgba::from(const hsv& a) {
@@ -179,5 +201,3 @@ hsv hsv::from(const rgba& in) {
 	ret[2] = cmax;
 	return hsv(fmod(ret.h(), 360), ret.s() * 100, ret.v() * 100);
 }
-
-
