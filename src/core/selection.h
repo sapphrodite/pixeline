@@ -3,7 +3,7 @@
 
 #include <common/coordinate_types.h>
 #include <common/bitarray.h>
-#include <common/image_types.h>
+#include <core/image_types.h>
 #include <math.h>
 
 #include "spatial_tree.h"
@@ -65,9 +65,6 @@ public:
 	iterator begin() const { return iterator(this, region.begin(), 0, 0); }
 	iterator end() const { return iterator(this, region.end(), 0, 0); }
 private:
-	u8 palette_idx(rgba color);
-	bool same(rgba a, rgba b);
-
 	std::array<rgba, 256> colors;
 	chunk_type region;
 };

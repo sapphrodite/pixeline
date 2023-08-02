@@ -26,7 +26,7 @@ void palette::paintEvent(QPaintEvent*) {
 	size_t offset = _page_index * (2 << _zoom_level);
 	for (int i = 0; i < size * size; i++) {
 		rgba c = get(i + offset);
-		painter.setBrush(QBrush(QColor(c.r * 255, c.g * 255, c.b * 255)));
+		painter.setBrush(QBrush(QColor(c.r() * 255, c.g() * 255, c.b() * 255)));
 		int x_pos = (i % size) * (square_size + 1) + 1;
 		int y_pos = (i / size) * (square_size + 1) + 1;
 		painter.drawRect(QRect(x_pos, y_pos,  square_size, square_size));
@@ -42,7 +42,7 @@ void palette::mouseDoubleClickEvent(QMouseEvent* e) {
 	p->show();
 
 	connect(p, &picker::value_changed, [=] (hsv d) {
-		set_pal_color(hnd, x_index + (y_index * tiles_per_side), to_rgb(d));
+		set_pal_color(hnd, x_index + (y_index * tiles_per_side), rgba::from(d));
 		repaint();
 	});
 }

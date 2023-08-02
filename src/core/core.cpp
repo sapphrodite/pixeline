@@ -10,29 +10,43 @@ class layer {
 public:
 	void apply_diff(diff& d) {
 		for (auto [pos, color] : d) {
-			size_t base_addr = (pos.x + pos.y * bounds.size.x);
+			size_t addr = (pos.x + pos.y * bounds.size.x);
 
 			// if undo diff doesn't have data for the current pixel, back up before overwriting
 			if (!undo_diff.exists(pos)) {
-				undo_diff.insert(pos, data[base_addr]);
+				undo_diff.insert(pos, data.at(addr));
 			}
 
-			data[base_addr] = color;
+			f32* ptr = data.buf();
+			ptr[addr * 4 + 0] = color.r();
+			ptr[addr * 4 + 1] = color.g();
+			ptr[addr * 4 + 2] = color.b();
+			ptr[addr * 4 + 3] = color.a();
 		} 
 	}
 
 	void new_image(uint16_t w, uint16_t h) {
-		data = std::vector<rgba>(w * h, rgba{1, 1, 1, 1}); 
+		data = image_t(canvas_fmt(), vec2D<u16>(w, h));
 		bounds = rect<int32_t>{{0, 0}, {w, h}};
 	}
 
-	const rgba* ptr() { return data.data(); }
+	void set_img(image_t img) {
+		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
+		data = image_t();
+		std::swap(img, data);
+	}
+
+	const f32* ptr() { return data.buf(); }
+	rgba at(vec2D<u16> pos) { return data.at(pos); }
+	rect<int32_t> get_bounds() { return bounds; }
+
 	diff& get_diff() { return undo_diff; }
 	void commit() { undo_diff = diff(); }
-	rect<int32_t> get_bounds() { return bounds; }
+
+	static image_format canvas_fmt() { return image_format(image_format::buf_t::f32, 4); }
 private:
 	diff undo_diff;
-	std::vector<rgba> data;
+	image_t data;
 	rect<int32_t> bounds;
 };
 
@@ -132,11 +146,16 @@ rgba get_pal_color(handle* hnd, palette_idx c) {
 }
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
+void load_image(handle* hnd, const char* filename) {
+	image_t img = image_t::from_file(filename);
+	hnd->canvas.set_img(img.convert_to(layer::canvas_fmt()));
+}
+
 void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 
 	*w = hnd->canvas.get_bounds().size.x;
 	*h = hnd->canvas.get_bounds().size.y;
 }
-const rgba* imagedata(handle* hnd) { return hnd->canvas.ptr(); }
+const f32* imagedata(handle* hnd) { return hnd->canvas.ptr(); }
 
 
 void undo(handle* hnd) { hnd->history.undo(hnd->canvas); }

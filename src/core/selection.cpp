@@ -38,11 +38,6 @@ selection::iterator::iterator(const selection* ctr, tree_type::iterator tree_itr
 }
 
 
-
-
-
-
-
 void diff_chunk::insert(size_t index, rgba color) {
 	region.set(index);
 	colors[index] = color;
@@ -61,24 +56,6 @@ diff_chunk::iterator diff_chunk::iterator::operator++() {
 
 diff_chunk::iterator::iterator(const diff_chunk* ctr, chunk_type::iterator bitr, size_t run_idx, size_t len_pos)
 		: ctr(ctr), bitr(bitr) {}
-
-u8 diff_chunk::palette_idx(rgba color) {
-	for (size_t i = 0; i < colors.size(); i++) {
-		if (same(colors[i], color))
-			return i;
-	}
-	
-	// if no match found
-	return colors.size() - 1;
-}
-
-bool diff_chunk::same(rgba a, rgba b) {
-	float err = pow(10, -6);
-	return (abs(a.r - b.r) < err && abs(a.g - b.g) < err
-			&& abs(a.b - b.b) < err && abs(a.a - b.a) < err);
-}
-
-
 
 
 void diff::insert(vec2D<u16> pos, rgba color) {

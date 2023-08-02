@@ -2,7 +2,7 @@
 #define CANVAS_H
 
 #include <QWidget>
-#include <common/image_types.h>
+#include <core/image_types.h>
 #include <core/api.h>
 #include "tool.h"
 

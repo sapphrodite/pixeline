@@ -7,7 +7,8 @@
 #include <QBoxLayout>
 #include <QCheckBox>
 
-#include <common/image_types.h>
+#include <core/image_types.h>
+#include <common/coordinate_types.h>
 
 class colormap;
 class grid_parent;
@@ -40,7 +41,7 @@ signals:
 class colormap : public QWidget {
 	Q_OBJECT
 public:
-	void set_axis(hsv::axis in);
+	void set_axis(int in);
 	void update_color(hsv new_color);
 
 	void paintEvent(QPaintEvent *event) override;
@@ -49,7 +50,7 @@ public:
 signals:
 	void value_changed(hsv);
 private:
-	hsv::axis axis;
+	int axis;
 	hsv hsv_color;
 };
 
@@ -58,13 +59,13 @@ class color_grid : public QWidget {
 	Q_OBJECT
 public:
 	color_grid() = default;
-	color_grid(hsv::axis x_in, hsv::axis y_in);
+	color_grid(int x_in, int y_in);
 	void update_color(hsv new_color);
 	void paintEvent(QPaintEvent *event) override;
 	void mouseDoubleClickEvent(QMouseEvent* e) override;
 //private:
-	hsv::axis x_axis;
-	hsv::axis y_axis;
+	int x_axis;
+	int y_axis;
 	hsv hsv_color;
 
 	vec2D<f32> steps = vec2D<f32>(1, 1);

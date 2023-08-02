@@ -1,6 +1,6 @@
 #include <QPainter>
 #include <QMouseEvent>
-#include <common/image_types.h>
+#include <core/image_types.h>
 #include "canvas.h"
 
 canvas::canvas(handle* hnd) : hnd(hnd) {
@@ -16,11 +16,11 @@ void canvas::paintEvent(QPaintEvent*) {
 	painter.drawRect(QRect(box.origin.x - 1, box.origin.y - 1 , box.size.x + 1, box.size.y + 1));
 	painter.setPen(Qt::NoPen);
 
-	const rgba* data = imagedata(hnd);
+	const f32* data = imagedata(hnd);
 	for (int y = 0; y < size().y; y++) {
 		for (int x = 0; x < size().x; x++) {
-			rgba c = data[x + (y * size().x)];
-			painter.setBrush(QBrush(QColor(c.r * 255, c.g * 255, c.b * 255)));
+			const f32* p = data + ((x + (y * size().x)) * 4);
+			painter.setBrush(QBrush(QColor(p[0] * 255, p[1] * 255, p[2] * 255)));
 			painter.drawRect(QRect(box.origin.x + x * _zoom, box.origin.y + y * _zoom,  _zoom, _zoom));
 		}
 	}
