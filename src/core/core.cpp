@@ -5,19 +5,27 @@
 #include <vector>
 #include <array>
 
+class commit {
+public:
+	std::vector<diff> diffs;
+};
 
 class layer {
 public:
-	void apply_diff(diff& d) {
+	void apply_diff(int layer_id, diff& d) {
+		if (undo_commit.diffs.size() <= layer_id)
+			undo_commit.diffs.resize(layer_id + 1);
+		diff& undo_diff = undo_commit.diffs[layer_id];
+
 		for (auto [pos, color] : d) {
 			size_t addr = (pos.x + pos.y * bounds.size.x);
 
 			// if undo diff doesn't have data for the current pixel, back up before overwriting
 			if (!undo_diff.exists(pos)) {
-				undo_diff.insert(pos, data.at(addr));
+				undo_diff.insert(pos, layers[0].at(addr));
 			}
 
-			f32* ptr = data.buf();
+			f32* ptr = layers[0].buf();
 			ptr[addr * 4 + 0] = color.r();
 			ptr[addr * 4 + 1] = color.g();
 			ptr[addr * 4 + 2] = color.b();
@@ -25,54 +33,60 @@ public:
 		} 
 	}
 
+	void apply_commit(commit& c) {
+		for (int i = 0; i < layers.size(); i++)
+			apply_diff(i, c.diffs[i]);
+	}
+
 	void new_image(uint16_t w, uint16_t h) {
-		data = image_t(canvas_fmt(), vec2D<u16>(w, h));
+		// TODO - this should clear all existing data and history
+		layers.emplace_back(image_t(canvas_fmt(), vec2D<u16>(w, h)));
 		bounds = rect<int32_t>{{0, 0}, {w, h}};
 	}
 
 	void set_img(image_t img) {
 		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
-		data = image_t();
-		std::swap(img, data);
+		layers.emplace_back(image_t());
+		std::swap(img, layers[0]);
 	}
 
-	const f32* ptr() { return data.buf(); }
-	rgba at(vec2D<u16> pos) { return data.at(pos); }
+	const f32* ptr() { return layers[0].buf(); }
+	rgba at(vec2D<u16> pos) { return layers[0].at(pos); }
 	rect<int32_t> get_bounds() { return bounds; }
 
-	diff& get_diff() { return undo_diff; }
-	void commit() { undo_diff = diff(); }
+	commit& get_commit() { return undo_commit; }
+	void finalize() { undo_commit = commit(); }
 
 	static image_format canvas_fmt() { return image_format(image_format::buf_t::f32, 4); }
 private:
-	diff undo_diff;
-	image_t data;
+	std::vector<image_t> layers;
+	commit undo_commit;
 	rect<int32_t> bounds;
 };
 
 class undo_stack {
 public:
-	void push(const diff& d) { 
-		diffs.resize(++pos);
-		diffs[pos - 1] = d;
+	void push(const commit& c) {
+		history.resize(++pos);
+		history[pos - 1] = c;
 	}
 
 	void undo(layer& l) {
 		if (pos != 0)
-			swap_diffs(l, --pos);
+			swap_commits(l, --pos);
 	}
 
 	void redo(layer& l) {
-		if (pos != diffs.size())
-			swap_diffs(l, pos++);
+		if (pos != history.size())
+			swap_commits(l, pos++);
 	}
 private:
-	void swap_diffs(layer& l, size_t idx) {
-		l.apply_diff(diffs[idx]);
-		diffs[idx] = l.get_diff();
-		l.commit();
+	void swap_commits(layer& l, size_t idx) {
+		l.apply_commit(history[idx]);
+		history[idx] = l.get_commit();
+		l.finalize();
 	}
-	std::vector<diff> diffs;
+	std::vector<commit> history;
 	size_t pos = 0;
 };
 
@@ -82,6 +96,7 @@ struct handle {
 	undo_stack history;
 	bool tool_active = false;
 	uint8_t active_color = 0;
+	int active_layer = 0;
 	tool active_tool = tool::null;
 };
 
@@ -143,8 +158,8 @@ bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
 	} else {
 		// cancel the operation
 		hnd->tool_active = false;
-		hnd->canvas.apply_diff(hnd->canvas.get_diff());
-		hnd->canvas.commit();
+		hnd->canvas.apply_commit(hnd->canvas.get_commit());
+		hnd->canvas.finalize();
 	}
 }
 
@@ -161,14 +176,14 @@ bool cursordrag(handle* hnd, int x1, int y1, int x2, int y2, unsigned flags) {
 }
 
 bool cursorrelease(handle* hnd, unsigned flags) {
-	hnd->history.push(hnd->canvas.get_diff());
-	hnd->canvas.commit();
+	hnd->history.push(hnd->canvas.get_commit());
+	hnd->canvas.finalize();
 	hnd->tool_active = false;
 }
 
 void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
 	diff d = draw_line(hnd->palette[c], {x1, y1}, {x2, y2}, hnd->canvas.get_bounds());
-	hnd->canvas.apply_diff(d);
+	hnd->canvas.apply_diff(hnd->active_layer, d);
 }
 
 void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
@@ -196,7 +211,7 @@ void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
 				to_explore.mark(vec2D<u16>{x, p.y});
 		}
 	}
-	hnd->canvas.apply_diff(d);
+	hnd->canvas.apply_diff(hnd->active_layer, d);
 };
 
 void set_active_color(handle* hnd, palette_idx c) { hnd->active_color = c; }
