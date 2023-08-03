@@ -15,6 +15,7 @@ public:
 	void mark(vec2D<u16> pos);
 	void clear(vec2D<u16> pos);
 	bool exists(vec2D<u16> pos);
+	bool empty();
 
 	class iterator {
 	public:

@@ -52,5 +52,5 @@ void palette::mousePressEvent(QMouseEvent* e) {
 	u8 pixels_per_square = std::min(height(), width()) / tiles_per_side;
 	int x_index = (e->x() / pixels_per_square);
 	int y_index = (e->y() / pixels_per_square);
-	emit color_select(x_index + (y_index * tiles_per_side));
+	set_active_color(hnd, (x_index + (y_index * tiles_per_side)));
 }

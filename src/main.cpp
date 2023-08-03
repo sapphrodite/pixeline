@@ -140,6 +140,7 @@ QWidget* leftpane(palette& p) {
 
 int main(int argc, char *argv[]) {
 	handle* hnd = handle_alloc();
+	set_tool(hnd, tool::pencil);
 	new_image(hnd, 100, 100);
 
 	tests();
@@ -148,8 +149,6 @@ int main(int argc, char *argv[]) {
 	palette p(hnd);
 	canvas c(hnd);
 	
-	QObject::connect(&p, &palette::color_select, &c, &canvas::select_color);	
-
 	main_panes->addWidget(leftpane(p));
 	main_panes->addWidget(&c);
 	main_panes->show();
@@ -164,5 +163,16 @@ int main(int argc, char *argv[]) {
 		redo(hnd);
 		c.repaint();
 	});
+
+	auto* pencilhook = new QShortcut(QKeySequence(Qt::Key_L), main_panes);
+	QObject::connect(pencilhook, &QShortcut::activated, [&]() {
+		set_tool(hnd, tool::pencil);
+	});
+
+	auto* fillhook = new QShortcut(QKeySequence(Qt::Key_B), main_panes);
+	QObject::connect(fillhook, &QShortcut::activated, [&]() {
+		set_tool(hnd, tool::fill);
+	});
+
 	return a.exec();
 }

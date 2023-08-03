@@ -140,10 +140,9 @@ public:
 		return &_chunks[current];
 	}
 
-
+	bool empty() const { return begin() == end(); }
 	iterator begin() const { return iterator(this); }
 	iterator end() const { return iterator(nullptr); }
-
 private:
 	node& _child(node parent, size_t child_idx) { return _subnodes[parent][child_idx]; }
 	node _child(node parent, size_t child_idx) const { return _subnodes[parent][child_idx]; }
