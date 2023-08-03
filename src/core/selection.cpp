@@ -20,6 +20,8 @@ bool selection::exists(vec2D<u16> pos) {
 	return chunk->get(ctr.index_into_chunk(pos));
 }
 
+bool selection::empty() { return ctr.empty(); }
+
 vec2D<u16> selection::iterator::operator*() const {
 	vec2D<u16> pos = tree_itr.chunk_origin();
 	return vec2D<u16>(pos.x + ((*bitr) % tree_type::chunk_width), pos.y + ((*bitr) / tree_type::chunk_width));

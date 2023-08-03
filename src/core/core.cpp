@@ -80,8 +80,10 @@ struct handle {
 	std::array<rgba, 256> palette;
 	layer canvas;
 	undo_stack history;
+	bool tool_active = false;
+	uint8_t active_color = 0;
+	tool active_tool = tool::null;
 };
-
 
 
 void add_pixel(rgba r, vec2D<int32_t> px, rect<int32_t> bound, diff& d) {
@@ -121,14 +123,47 @@ diff draw_line(rgba r, vec2D<int32_t> a, vec2D<int32_t> b, rect<int32_t> bound) 
 handle* handle_alloc() { return new handle; }
 void handle_release(handle* hnd) { delete hnd; };
 
-void tool_release(handle* hnd) {
+void set_tool(handle* hnd, tool t) {
+	hnd->active_tool = t;
+}
+
+bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
+	if (true) {
+		hnd->tool_active = true;
+		switch (hnd->active_tool) {
+		case tool::pencil:
+			pencil(hnd, hnd->active_color, x, y, x, y);
+			break;
+		case tool::fill:
+			fill(hnd, hnd->active_color, x, y, false);
+			break;
+		default:
+			break;
+		}
+	} else {
+		// cancel the operation
+		hnd->tool_active = false;
+		hnd->canvas.apply_diff(hnd->canvas.get_diff());
+		hnd->canvas.commit();
+	}
+}
+
+bool cursordrag(handle* hnd, int x1, int y1, int x2, int y2, unsigned flags) {
+	if (hnd->tool_active) {
+		switch (hnd->active_tool) {
+		case tool::pencil:
+			pencil(hnd, hnd->active_color, x1, y1, x2, y2);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+bool cursorrelease(handle* hnd, unsigned flags) {
 	hnd->history.push(hnd->canvas.get_diff());
 	hnd->canvas.commit();
-};
-
-void tool_cancel(handle* hnd) {
-	hnd->canvas.apply_diff(hnd->canvas.get_diff());
-	hnd->canvas.commit();
+	hnd->tool_active = false;
 }
 
 void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
@@ -136,6 +171,35 @@ void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int3
 	hnd->canvas.apply_diff(d);
 }
 
+void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
+	vec2D<int> size = hnd->canvas.get_bounds().size;
+	selection visited;
+	selection to_explore;
+	diff d;
+	rgba fill_color = hnd->palette[c];
+	rgba scan_color = hnd->canvas.at({x1, y1});
+
+	to_explore.mark(vec2D<u16>{x1, y1});
+	while (!to_explore.empty()) {
+		vec2D<u16> p = *(to_explore.begin());
+		to_explore.clear(p);
+		visited.mark(p);
+
+		add_pixel(fill_color, p.to<int>(), hnd->canvas.get_bounds(), d);
+
+		for (int y = std::max(p.y - 1, 0); y < std::min(p.y + 2, size.y); y++) {
+			if (!visited.exists({p.x, y}) && hnd->canvas.at({p.x, y}) == scan_color)
+				to_explore.mark(vec2D<u16>{p.x, y});
+		}
+		for (int x = std::max(p.x - 1, 0); x < std::min(p.x + 2, size.x); x++) {
+			if (!visited.exists({x, p.y}) && hnd->canvas.at({x, p.y}) == scan_color)
+				to_explore.mark(vec2D<u16>{x, p.y});
+		}
+	}
+	hnd->canvas.apply_diff(d);
+};
+
+void set_active_color(handle* hnd, palette_idx c) { hnd->active_color = c; }
 void set_pal_color(handle* hnd, palette_idx c, rgba r) {
 	assertion(c < PALETTE_SIZE, "Palette index out of range\n");
 	hnd->palette[c] = r; 
