@@ -112,6 +112,15 @@ image_t image_t::from_file(const char* filename) {
 
 	png_init_io(png_ptr, fp);
 	png_read_info(png_ptr, info_ptr);
+
+	// TODO - get an actual system value, put it in the API
+	double gamma;
+	if (png_get_gAMA(png_ptr, info_ptr, &gamma))
+		png_set_gamma(png_ptr, 1.0, gamma);
+	else
+		png_set_gamma(png_ptr, 1.0, 1.0 / 2.2);
+
+
 	png_read_update_info(png_ptr, info_ptr);
 
 	int width = png_get_image_width(png_ptr, info_ptr);
@@ -138,13 +147,12 @@ image_t image_t::from_file(const char* filename) {
 	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	fclose(fp);
 
+
 	return img;
 }
 
 image_t image_t::convert_to(image_format dstfmt) {
 	image_t dst(dstfmt, data.get()->size);
-
-	// TODO - dest num channels can't be lower than src, not easily
 
 	void* dstptr = dst.data.get()->buf();
 	void* srcptr = data.get()->buf();

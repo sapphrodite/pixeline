@@ -11,7 +11,6 @@
 class hsv;
 class rgba;
 
-
 struct hsv {
 public:
 	constexpr hsv() = default;
@@ -33,6 +32,12 @@ public:
 	constexpr rgba() : data(1, 1, 1, 0) {};
 	constexpr rgba(f32 r, f32 g, f32 b, f32 a) : data(r, g, b, a) {}
 	static rgba from(const hsv&);
+
+	void gamma_correct(float gamma) {
+		for (int i = 0; i < 3; i++) {
+			data[i] = pow(data[i], gamma);
+		}
+	}
 
 	f32& operator[](size_t idx) { return data[idx]; };
 	bool operator==(const rgba& rhs) {

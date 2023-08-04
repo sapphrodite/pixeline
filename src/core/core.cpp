@@ -30,6 +30,8 @@ public:
 			ptr[addr * 4 + 1] = color.g();
 			ptr[addr * 4 + 2] = color.b();
 			ptr[addr * 4 + 3] = color.a();
+
+			composite_pixel(pos.to<int>());
 		} 
 	}
 
@@ -41,16 +43,20 @@ public:
 	void new_image(uint16_t w, uint16_t h) {
 		// TODO - this should clear all existing data and history
 		layers.emplace_back(image_t(canvas_fmt(), vec2D<u16>(w, h)));
+		composite = image_t(canvas_fmt(), vec2D<u16>(w, h));
 		bounds = rect<int32_t>{{0, 0}, {w, h}};
+		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
 	void set_img(image_t img) {
 		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
+		composite = image_t(canvas_fmt(), img.size());
 		layers.emplace_back(image_t());
 		std::swap(img, layers[0]);
+		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
-	const f32* ptr() { return layers[0].buf(); }
+	const f32* ptr() { return composite.buf(); }
 	rgba at(vec2D<u16> pos) { return layers[0].at(pos); }
 	rect<int32_t> get_bounds() { return bounds; }
 
@@ -60,8 +66,28 @@ public:
 	static image_format canvas_fmt() { return image_format(image_format::buf_t::f32, 4); }
 private:
 	std::vector<image_t> layers;
+	image_t composite;
 	commit undo_commit;
 	rect<int32_t> bounds;
+
+	void composite_pixel(vec2D<int> px) {
+		rgba c = at(px.to<u16>());
+		c.gamma_correct(1.0 / 2.2);
+		f32* ptr = composite.buf();
+		size_t addr = px.x + (px.y * bounds.size.x);
+		ptr[addr * 4 + 0] = c.r();
+		ptr[addr * 4 + 1] = c.g();
+		ptr[addr * 4 + 2] = c.b();
+		ptr[addr * 4 + 3] = c.a();
+	}
+
+	void composite_rect(vec2D<int> tl, vec2D<int> br) {
+		for (int x = tl.x; x < br.x; x++) {
+			for (int y = tl.y; y < br.y; y++) {
+				composite_pixel({x, y});
+			}
+		}
+	}
 };
 
 class undo_stack {
@@ -217,11 +243,15 @@ void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
 void set_active_color(handle* hnd, palette_idx c) { hnd->active_color = c; }
 void set_pal_color(handle* hnd, palette_idx c, rgba r) {
 	assertion(c < PALETTE_SIZE, "Palette index out of range\n");
+	r.gamma_correct(2.2);
 	hnd->palette[c] = r; 
 }
+
 rgba get_pal_color(handle* hnd, palette_idx c) { 
 	assertion(c < PALETTE_SIZE, "Palette index out of range\n");
-	return hnd->palette[c];
+	rgba r = hnd->palette[c];
+	r.gamma_correct(1.0 / 2.2);
+	return r;
 }
 
 void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 

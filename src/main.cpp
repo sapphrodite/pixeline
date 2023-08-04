@@ -141,7 +141,7 @@ QWidget* leftpane(palette& p) {
 int main(int argc, char *argv[]) {
 	handle* hnd = handle_alloc();
 	set_tool(hnd, tool::pencil);
-	new_image(hnd, 100, 100);
+	load_image(hnd, "test.png");
 
 	tests();
 	QApplication a(argc, argv);
