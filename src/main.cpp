@@ -141,7 +141,35 @@ QWidget* leftpane(palette& p) {
 int main(int argc, char *argv[]) {
 	handle* hnd = handle_alloc();
 	set_tool(hnd, tool::pencil);
-	load_image(hnd, "test.png");
+	new_image(hnd, 100, 100);
+	layer_add(hnd);
+
+	set_pal_color(hnd, 0, rgba{1, 0, 0, 1});
+	set_pal_color(hnd, 1, rgba{0, 0, 0, 0});
+	set_pal_color(hnd, 2, rgba{0, 1, 0, 0.2});
+	set_pal_color(hnd, 3, rgba{0, 1, 0, 0.3});
+	set_pal_color(hnd, 4, rgba{0, 1, 0, 0.4});
+	set_pal_color(hnd, 5, rgba{0, 1, 0, 0.5});
+	set_pal_color(hnd, 6, rgba{0, 1, 0, 0.6});
+	set_pal_color(hnd, 7, rgba{0, 1, 0, 0.7});
+	set_pal_color(hnd, 8, rgba{0, 1, 0, 0.8});
+	set_pal_color(hnd, 9, rgba{0, 1, 0, 0.9});
+	set_pal_color(hnd, 10, rgba{0, 1, 0, 1});
+
+	layer_select(hnd, 1);
+	fill(hnd, 0, 0, 0, false);
+
+	layer_select(hnd, 0);
+	fill(hnd, 1, 0, 0, false);
+	pencil(hnd, 2, 2, 6, 2, 50);
+	pencil(hnd, 3, 3, 6, 3, 50);
+	pencil(hnd, 4, 4, 6, 4, 50);
+	pencil(hnd, 5, 5, 6, 5, 50);
+	pencil(hnd, 6, 6, 6, 6, 50);
+	pencil(hnd, 7, 7, 6, 7, 50);
+	pencil(hnd, 8, 8, 6, 8, 50);
+	pencil(hnd, 9, 9, 6, 9, 50);
+	pencil(hnd, 10, 10, 6, 10, 50);
 
 	tests();
 	QApplication a(argc, argv);

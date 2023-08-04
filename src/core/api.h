@@ -35,4 +35,7 @@ rgba get_pal_color(handle*, palette_idx c);
 void undo(handle* hnd); 
 void redo(handle* hnd);
 
+void layer_add(handle* hnd);
+void layer_select(handle* hnd, int layer_id);
+
 #endif //API_H

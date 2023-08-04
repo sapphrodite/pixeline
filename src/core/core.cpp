@@ -22,10 +22,10 @@ public:
 
 			// if undo diff doesn't have data for the current pixel, back up before overwriting
 			if (!undo_diff.exists(pos)) {
-				undo_diff.insert(pos, layers[0].at(addr));
+				undo_diff.insert(pos, layers[active_layer].at(addr));
 			}
 
-			f32* ptr = layers[0].buf();
+			f32* ptr = layers[active_layer].buf();
 			ptr[addr * 4 + 0] = color.r();
 			ptr[addr * 4 + 1] = color.g();
 			ptr[addr * 4 + 2] = color.b();
@@ -52,18 +52,23 @@ public:
 		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
 		composite = image_t(canvas_fmt(), img.size());
 		layers.emplace_back(image_t());
-		std::swap(img, layers[0]);
+		std::swap(img, layers.back());
 		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
+	void add_layer() {
+		layers.emplace_back(image_t(canvas_fmt(), bounds.size.to<u16>()));
+	}
+
 	const f32* ptr() { return composite.buf(); }
-	rgba at(vec2D<u16> pos) { return layers[0].at(pos); }
+	rgba at(vec2D<u16> pos) { return layers[active_layer].at(pos); }
 	rect<int32_t> get_bounds() { return bounds; }
 
 	commit& get_commit() { return undo_commit; }
 	void finalize() { undo_commit = commit(); }
 
 	static image_format canvas_fmt() { return image_format(image_format::buf_t::f32, 4); }
+	int active_layer = 0;
 private:
 	std::vector<image_t> layers;
 	image_t composite;
@@ -71,14 +76,29 @@ private:
 	rect<int32_t> bounds;
 
 	void composite_pixel(vec2D<int> px) {
-		rgba c = at(px.to<u16>());
-		c.gamma_correct(1.0 / 2.2);
+		// TODO - this is inefficient
+		rgba a = layers[0].at(px.to<u16>());
+		for (int i = 1; i < layers.size(); i++) {
+			if (a.a() >= 1)
+				break;
+
+			rgba b = layers[i].at(px.to<u16>());
+			rgba out;
+			out[3] = a.a()  + b.a() * (1.0 - a.a());
+			for (int j = 0; j < 3; j++) {
+				out[j] = ((a[j] * a.a()) + (b[j] * b.a()) * (1.0 - a.a())) / out.a();
+			}
+
+			a = out;
+		}
+
+		a.gamma_correct(1.0 / 2.2);
 		f32* ptr = composite.buf();
 		size_t addr = px.x + (px.y * bounds.size.x);
-		ptr[addr * 4 + 0] = c.r();
-		ptr[addr * 4 + 1] = c.g();
-		ptr[addr * 4 + 2] = c.b();
-		ptr[addr * 4 + 3] = c.a();
+		ptr[addr * 4 + 0] = a.r();
+		ptr[addr * 4 + 1] = a.g();
+		ptr[addr * 4 + 2] = a.b();
+		ptr[addr * 4 + 3] = a.a();
 	}
 
 	void composite_rect(vec2D<int> tl, vec2D<int> br) {
@@ -122,7 +142,6 @@ struct handle {
 	undo_stack history;
 	bool tool_active = false;
 	uint8_t active_color = 0;
-	int active_layer = 0;
 	tool active_tool = tool::null;
 };
 
@@ -209,7 +228,7 @@ bool cursorrelease(handle* hnd, unsigned flags) {
 
 void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
 	diff d = draw_line(hnd->palette[c], {x1, y1}, {x2, y2}, hnd->canvas.get_bounds());
-	hnd->canvas.apply_diff(hnd->active_layer, d);
+	hnd->canvas.apply_diff(hnd->canvas.active_layer, d);
 }
 
 void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
@@ -237,7 +256,7 @@ void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
 				to_explore.mark(vec2D<u16>{x, p.y});
 		}
 	}
-	hnd->canvas.apply_diff(hnd->active_layer, d);
+	hnd->canvas.apply_diff(hnd->canvas.active_layer, d);
 };
 
 void set_active_color(handle* hnd, palette_idx c) { hnd->active_color = c; }
@@ -269,3 +288,11 @@ const f32* imagedata(handle* hnd) { return hnd->canvas.ptr(); }
 
 void undo(handle* hnd) { hnd->history.undo(hnd->canvas); }
 void redo(handle* hnd) { hnd->history.redo(hnd->canvas); }
+
+void layer_add(handle* hnd) {
+	hnd->canvas.add_layer();
+}
+
+void layer_select(handle* hnd, int layer_id) {
+	hnd->canvas.active_layer = layer_id;
+}
