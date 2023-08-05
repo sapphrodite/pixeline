@@ -36,6 +36,8 @@ void undo(handle* hnd);
 void redo(handle* hnd);
 
 void layer_add(handle* hnd);
+void layer_remove(handle* hnd, int layer_id);
 void layer_select(handle* hnd, int layer_id);
+void layer_reorder(handle* hnd, int old_pos, int new_pos);
 
 #endif //API_H

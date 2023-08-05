@@ -171,6 +171,9 @@ int main(int argc, char *argv[]) {
 	pencil(hnd, 9, 9, 6, 9, 50);
 	pencil(hnd, 10, 10, 6, 10, 50);
 
+	layer_reorder(hnd, 1, 0);
+	layer_remove(hnd, 1);
+
 	tests();
 	QApplication a(argc, argv);
 	auto* main_panes = new QSplitter(Qt::Orientation::Horizontal);

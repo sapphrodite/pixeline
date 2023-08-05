@@ -56,8 +56,21 @@ public:
 		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
+	void remove_layer(int layer_id) {
+		layers.erase(layers.begin() + layer_id);
+		composite_rect(bounds.top_left(), bounds.bottom_right());
+	}
+
 	void add_layer() {
 		layers.emplace_back(image_t(canvas_fmt(), bounds.size.to<u16>()));
+	}
+
+	void reorder_layer(int old_pos, int new_pos) {
+		int incr = (old_pos > new_pos) ? -1 : 1;
+		for (int i = old_pos; i != new_pos; i += incr) {
+			std::swap(layers[i], layers[i + incr]);
+		}
+		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
 	const f32* ptr() { return composite.buf(); }
@@ -293,6 +306,14 @@ void layer_add(handle* hnd) {
 	hnd->canvas.add_layer();
 }
 
+void layer_remove(handle* hnd, int layer_id) {
+	hnd->canvas.remove_layer(layer_id);
+}
+
 void layer_select(handle* hnd, int layer_id) {
 	hnd->canvas.active_layer = layer_id;
+}
+
+void layer_reorder(handle* hnd, int old_pos, int new_pos) {
+	hnd->canvas.reorder_layer(old_pos, new_pos);
 }
