@@ -156,11 +156,17 @@ int main(int argc, char *argv[]) {
 	set_pal_color(hnd, 9, rgba{0, 1, 0, 0.9});
 	set_pal_color(hnd, 10, rgba{0, 1, 0, 1});
 
-	layer_select(hnd, 1);
-	fill(hnd, 0, 0, 0, false);
 
 	layer_select(hnd, 0);
 	fill(hnd, 1, 0, 0, false);
+	op_finalize(hnd);
+
+	layer_select(hnd, 1);
+	fill(hnd, 0, 0, 0, false);
+	op_finalize(hnd);
+
+
+	layer_select(hnd, 0);
 	pencil(hnd, 2, 2, 6, 2, 50);
 	pencil(hnd, 3, 3, 6, 3, 50);
 	pencil(hnd, 4, 4, 6, 4, 50);
@@ -170,9 +176,10 @@ int main(int argc, char *argv[]) {
 	pencil(hnd, 8, 8, 6, 8, 50);
 	pencil(hnd, 9, 9, 6, 9, 50);
 	pencil(hnd, 10, 10, 6, 10, 50);
+	op_finalize(hnd);
 
-	layer_reorder(hnd, 1, 0);
-	layer_remove(hnd, 1);
+	// layer_reorder(hnd, 1, 0);
+	// layer_remove(hnd, 1);
 
 	tests();
 	QApplication a(argc, argv);

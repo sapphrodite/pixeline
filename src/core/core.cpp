@@ -36,7 +36,7 @@ public:
 	}
 
 	void apply_commit(commit& c) {
-		for (int i = 0; i < layers.size(); i++)
+		for (int i = 0; i < c.diffs.size(); i++)
 			apply_diff(i, c.diffs[i]);
 	}
 
@@ -196,8 +196,14 @@ diff draw_line(rgba r, vec2D<int32_t> a, vec2D<int32_t> b, rect<int32_t> bound) 
 handle* handle_alloc() { return new handle; }
 void handle_release(handle* hnd) { delete hnd; };
 
-void set_tool(handle* hnd, tool t) {
-	hnd->active_tool = t;
+void op_cancel(handle* hnd) {
+	hnd->canvas.apply_commit(hnd->canvas.get_commit());
+	hnd->canvas.finalize();
+}
+
+void op_finalize(handle* hnd) {
+	hnd->history.push(hnd->canvas.get_commit());
+	hnd->canvas.finalize();
 }
 
 bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
@@ -216,8 +222,7 @@ bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
 	} else {
 		// cancel the operation
 		hnd->tool_active = false;
-		hnd->canvas.apply_commit(hnd->canvas.get_commit());
-		hnd->canvas.finalize();
+		op_cancel(hnd);
 	}
 }
 
@@ -234,9 +239,12 @@ bool cursordrag(handle* hnd, int x1, int y1, int x2, int y2, unsigned flags) {
 }
 
 bool cursorrelease(handle* hnd, unsigned flags) {
-	hnd->history.push(hnd->canvas.get_commit());
-	hnd->canvas.finalize();
+	op_finalize(hnd);
 	hnd->tool_active = false;
+}
+
+void set_tool(handle* hnd, tool t) {
+	hnd->active_tool = t;
 }
 
 void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
