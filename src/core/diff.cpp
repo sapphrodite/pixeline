@@ -4,8 +4,11 @@
 
 void diff::insert(vec2D<u16> pos, rgba color) {
 	auto* chunk = ctr.insert_at(pos);
-	chunk->region.set(ctr.chunk_index(pos));
-	chunk->colors[ctr.chunk_index(pos)] = color;
+	size_t index = ctr.chunk_index(pos);
+	if (!chunk->region.get(index)) {
+		chunk->region.set(index);
+		chunk->colors[index] = color;
+	}
 }
 
 bool diff::exists(vec2D<u16> pos) {

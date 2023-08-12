@@ -4,19 +4,62 @@
 #include <vector>
 #include <array>
 
+diff apply_diff(image_t& img, const diff& d) {
+	diff undo;
+	for (auto [pos, color] : d) {
+		undo.insert(pos, img.get(pos));
+		img.set(pos, color);
+	}
+	return undo;
+}
+
+class undo_stack {
+public:
+	void push(const diff& d) {
+		for (auto [pos, color] : d)
+			undo_diff.insert(pos, color);
+	}
+
+	void finalize() {
+		diffs.resize(++pos);
+		diffs[pos - 1] = undo_diff;
+		undo_diff = diff();
+	}
+
+	diff revert() {
+		diff ret = undo_diff;
+		undo_diff = diff();
+		return ret;
+	}
+
+	void undo(image_t& l) {
+		if (pos != 0)
+			swap_diffs(l, --pos);
+		undo_diff = diff();
+	}
+
+	void redo(image_t& l) {
+		if (pos != diffs.size())
+			swap_diffs(l, pos++);
+	}
+private:
+	void swap_diffs(image_t& l, size_t idx) {
+		diffs[idx] = apply_diff(l, diffs[idx]);
+	}
+
+	std::vector<diff> diffs;
+	diff undo_diff;
+	size_t pos = 0;
+};
+
 struct handle {
 	std::array<rgba, 256> palette;
 	image_t canvas;
+	undo_stack history;
 	bool tool_active = false;
 	u8 active_color = 0;
 	vec2D<int> last_pos = vec2D<int>{-1, -1};
 };
-
-void apply_diff(image_t& img, diff& d) {
-	for (auto [pos, color] : d) {
-		img.set(pos, color);
-	} 
-}
 
 // Brensham's algorithm to draw line from a to b
 diff draw_line(rgba r, vec2D<int> a, vec2D<int> b, rect<int> bound) {
@@ -48,6 +91,10 @@ diff draw_line(rgba r, vec2D<int> a, vec2D<int> b, rect<int> bound) {
 handle* handle_new() { return new handle; }
 void handle_free(handle* hnd) { delete hnd; };
 
+
+void op_cancel(handle* hnd) { apply_diff(hnd->canvas, hnd->history.revert()); }
+void op_finalize(handle* hnd) { hnd->history.finalize(); }
+
 void cursor_press(handle* hnd, int x, int y) {
 	pencil(hnd, hnd->active_color, x, y, x, y);
 	hnd->tool_active = true;
@@ -61,12 +108,15 @@ void cursor_drag(handle* hnd, int x, int y) {
 	}
 }
 
-void cursor_release(handle* hnd) { hnd->tool_active = false; }
+void cursor_release(handle* hnd) {
+	hnd->tool_active = false;
+	op_finalize(hnd);
+}
 
 void pencil(handle* hnd, u8 pal_idx, int x1, int y1, int x2, int y2) {
 	rect<int> bounds{{0, 0}, hnd->canvas.size().to<int>()};
 	diff d = draw_line(hnd->palette[pal_idx], {x1, y1}, {x2, y2}, bounds);
-	apply_diff(hnd->canvas, d);
+	hnd->history.push(apply_diff(hnd->canvas, d));
 }
 
 void pal_select(handle* hnd, u8 pal_idx) { hnd->active_color = pal_idx; }
@@ -79,3 +129,6 @@ void image_size(handle* hnd, u16* w, u16* h) {
 	*h = hnd->canvas.size().y;
 }
 const f32* image_data(handle* hnd) { return hnd->canvas.ptr(); }
+
+void undo(handle* hnd) { hnd->history.undo(hnd->canvas); }
+void redo(handle* hnd) { hnd->history.redo(hnd->canvas); }

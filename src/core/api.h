@@ -8,6 +8,8 @@ class handle;
 handle* handle_new();
 void handle_free(handle*);
 
+void op_cancel(handle*);
+void op_finalize(handle*);
 void cursor_press(handle*, int x, int y);
 void cursor_drag(handle*, int x, int y);
 void cursor_release(handle*);
@@ -21,5 +23,8 @@ const f32* image_data(handle*);
 void pal_select(handle*, u8 pal_idx);
 void pal_set(handle*, u8 pal_idx, rgba color);
 rgba pal_get(handle*, u8 pal_idx);
+
+void undo(handle* hnd);
+void redo(handle* hnd);
 
 #endif //API_H
