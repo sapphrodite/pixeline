@@ -25,5 +25,15 @@ int main(int argc, char *argv[]) {
 		c.repaint();
 	});
 
+	auto* pencilhook = new QShortcut(QKeySequence(Qt::Key_L), &c);
+	QObject::connect(pencilhook, &QShortcut::activated, [&]() {
+		tool_select(hnd, tool::pencil);
+	});
+
+	auto* fillhook = new QShortcut(QKeySequence(Qt::Key_B), &c);
+	QObject::connect(fillhook, &QShortcut::activated, [&]() {
+		tool_select(hnd, tool::fill);
+	});
+
 	return a.exec();
 }

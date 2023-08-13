@@ -57,6 +57,7 @@ struct handle {
 	image_t canvas;
 	undo_stack history;
 	bool tool_active = false;
+	tool active_tool = tool::pencil;
 	u8 active_color = 0;
 	vec2D<int> last_pos = vec2D<int>{-1, -1};
 };
@@ -96,14 +97,29 @@ void op_cancel(handle* hnd) { apply_diff(hnd->canvas, hnd->history.revert()); }
 void op_finalize(handle* hnd) { hnd->history.finalize(); }
 
 void cursor_press(handle* hnd, int x, int y) {
-	pencil(hnd, hnd->active_color, x, y, x, y);
 	hnd->tool_active = true;
+	switch (hnd->active_tool) {
+	case tool::pencil:
+		pencil(hnd, hnd->active_color, x, y, x, y);
+		break;
+	case tool::fill:
+		fill(hnd, hnd->active_color, x, y);
+		break;
+	default:
+		break;
+	}
 	hnd->last_pos = vec2D<int>{x, y};
 }
 
 void cursor_drag(handle* hnd, int x, int y) {
 	if (hnd->tool_active) {
-		pencil(hnd, hnd->active_color, hnd->last_pos.x, hnd->last_pos.y, x, y);
+		switch (hnd->active_tool) {
+		case tool::pencil:
+			pencil(hnd, hnd->active_color, hnd->last_pos.x, hnd->last_pos.y, x, y);
+			break;
+		default:
+			break;
+		}
 		hnd->last_pos = vec2D<int>{x, y};
 	}
 }
@@ -113,11 +129,43 @@ void cursor_release(handle* hnd) {
 	op_finalize(hnd);
 }
 
+void tool_select(handle* hnd, tool t) { hnd->active_tool = t; }
+
 void pencil(handle* hnd, u8 pal_idx, int x1, int y1, int x2, int y2) {
 	rect<int> bounds{{0, 0}, hnd->canvas.size().to<int>()};
 	diff d = draw_line(hnd->palette[pal_idx], {x1, y1}, {x2, y2}, bounds);
 	hnd->history.push(apply_diff(hnd->canvas, d));
 }
+
+void fill(handle* hnd, u8 pal_idx, int x1, int y1) {
+	diff d;
+	selection visited;
+	selection to_explore;
+	rgba scan_color = hnd->canvas.get({x1, y1});
+
+	to_explore.mark({x1, y1});
+	while (!to_explore.empty()) {
+		vec2D<u16> p = *(to_explore.begin());
+		to_explore.clear(p);
+		visited.mark(p);
+
+		vec2D<int> size = hnd->canvas.size().to<int>();
+		if (!rect<int>{{0, 0}, size}.contains(p.to<int>()))
+			break;
+
+		d.insert(p, hnd->palette[pal_idx]);
+		vec2D<u16> neighbors[4] = {
+			{p.x, p.y - 1}, {p.x, p.y + 1},
+			{p.x - 1, p.y}, {p.x + 1, p.y}
+		};
+
+		for (auto n : neighbors)
+			if (!visited.exists(n) && hnd->canvas.get(n) == scan_color)
+				to_explore.mark(n);
+	}
+	hnd->history.push(apply_diff(hnd->canvas, d));
+};
+
 
 void pal_select(handle* hnd, u8 pal_idx) { hnd->active_color = pal_idx; }
 void pal_set(handle* hnd, u8 pal_idx, rgba r) { hnd->palette[pal_idx] = r; }

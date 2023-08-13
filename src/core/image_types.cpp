@@ -1,5 +1,14 @@
 #include "image_types.h"
 #include <assert.h>
+#include <math.h>
+
+bool rgba::operator==(const rgba& rhs) {
+	float err = pow(10, -6);
+	for (int i = 0; i < 4; i++)
+		if (abs(data[i] - rhs.data[i]) > err)
+			return false;
+	return true;
+}
 
 image_t::image_t(vec2D<u16> size) {
 	_size = size;

@@ -11,6 +11,7 @@ public:
 	constexpr rgba(f32 r, f32 g, f32 b, f32 a) : data(r, g, b, a) {}
 
 	f32 operator[](size_t idx) { return data[idx]; };
+	bool operator==(const rgba& rhs);
 
 	f32 r() const { return data[0]; }
 	f32 g() const { return data[1]; }
@@ -30,7 +31,6 @@ public:
 	void set(vec2D<u16>, rgba);
 	f32* ptr();
 private:
-	rgba at(size_t);
 	std::vector<f32> buf;
 	vec2D<u16> _size;
 };
