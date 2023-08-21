@@ -17,8 +17,8 @@ private:
 	handle* hnd;
 	u8 zoom;
 
-	::rect<u16> viewport();
-	vec2D<i32> to_imgspace(QMouseEvent*);
+	::rect viewport();
+	vec2i to_imgspace(QMouseEvent*);
 };
 
 #endif // CANVAS_H

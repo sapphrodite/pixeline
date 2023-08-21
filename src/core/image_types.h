@@ -24,15 +24,15 @@ private:
 class image_t {
 public:
 	image_t() = default;
-	image_t(vec2D<u16> size);
+	image_t(vec2u size);
 
-	vec2D<u16> size();
-	rgba get(vec2D<u16>);
-	void set(vec2D<u16>, rgba);
+	vec2u size();
+	rgba get(vec2u);
+	void set(vec2u, rgba);
 	f32* ptr();
 private:
 	std::vector<f32> buf;
-	vec2D<u16> _size;
+	vec2u _size;
 };
 
 #endif //IMAGE_TYPES_H

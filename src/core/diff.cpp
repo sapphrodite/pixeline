@@ -2,9 +2,9 @@
 #include <math.h>
 
 
-void selection::mark(vec2D<u16> pos) { ctr.insert_at(pos)->set(ctr.chunk_index(pos)); }
-void selection::clear(vec2D<u16> pos) { ctr.chunk_at(pos)->clear(ctr.chunk_index(pos)); }
-bool selection::exists(vec2D<u16> pos) {
+void selection::mark(vec2u pos) { ctr.insert_at(pos)->set(ctr.chunk_index(pos)); }
+void selection::clear(vec2u pos) { ctr.chunk_at(pos)->clear(ctr.chunk_index(pos)); }
+bool selection::exists(vec2u pos) {
 	auto* chunk = ctr.chunk_at(pos);
 	if (!chunk)
 		return false;
@@ -12,8 +12,8 @@ bool selection::exists(vec2D<u16> pos) {
 }
 bool selection::empty() { return ctr.empty(); }
 
-vec2D<u16> selection::iterator::operator*() const {
-	vec2D<u16> pos = tree_itr.chunk_origin();
+vec2u selection::iterator::operator*() const {
+	vec2u pos = tree_itr.chunk_origin();
 	pos.x += (*bitr) % tree_type::chunk_width;
 	pos.y += (*bitr) / tree_type::chunk_width;
 	return pos;
@@ -33,7 +33,7 @@ selection::iterator::iterator(const selection* ctr, tree_type::iterator tree_itr
 		bitr = (*tree_itr)->begin();
 }
 
-void diff::insert(vec2D<u16> pos, rgba color) {
+void diff::insert(vec2u pos, rgba color) {
 	auto* chunk = ctr.insert_at(pos);
 	size_t index = ctr.chunk_index(pos);
 	if (!chunk->region.get(index)) {
@@ -42,17 +42,17 @@ void diff::insert(vec2D<u16> pos, rgba color) {
 	}
 }
 
-bool diff::exists(vec2D<u16> pos) {
+bool diff::exists(vec2u pos) {
 	auto* chunk = ctr.chunk_at(pos);
 	if (!chunk)
 		return false;
 	return chunk->region.get(ctr.chunk_index(pos));
 }
 
-std::pair<vec2D<u16>, rgba> diff::iterator::operator*() const {
+std::pair<vec2u, rgba> diff::iterator::operator*() const {
 	size_t idx = (*bitr);
-	vec2D<u16> origin = tree_itr.chunk_origin();
-	origin = vec2D<u16>(origin.x + (idx % tree_t::chunk_width), origin.y + (idx / tree_t::chunk_width));
+	vec2u origin = tree_itr.chunk_origin();
+	origin = vec2u(origin.x + (idx % tree_t::chunk_width), origin.y + (idx / tree_t::chunk_width));
 	return std::make_pair(origin, (*tree_itr)->colors[(*bitr)]);
 }
 

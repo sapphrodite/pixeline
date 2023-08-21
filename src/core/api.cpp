@@ -59,19 +59,19 @@ struct handle {
 	bool tool_active = false;
 	tool active_tool = tool::pencil;
 	u8 active_color = 0;
-	vec2D<int> last_pos = vec2D<int>{-1, -1};
+	vec2i last_pos;
 };
 
 // Brensham's algorithm to draw line from a to b
-diff draw_line(rgba r, vec2D<int> a, vec2D<int> b, rect<int> bound) {
+diff draw_line(rgba r, vec2i a, vec2i b, rect bound) {
 	diff d;
-	vec2D<int> delta(abs(b.x - a.x), -abs(b.y - a.y));
-	vec2D<int> sign(a.x < b.x ? 1 : -1, a.y < b.y ? 1 : -1);
+	vec2i delta(abs(b.x - a.x), -abs(b.y - a.y));
+	vec2i sign(a.x < b.x ? 1 : -1, a.y < b.y ? 1 : -1);
 	int error = delta.x + delta.y;
 
 	for (;;) {
 		if (bound.contains(a))
-			d.insert(a.to<u16>(), r);
+			d.insert(a.to<unsigned>(), r);
 
 		if (a.x == b.x && a.y == b.y) break;
 		int e2 = 2 * error;
@@ -92,35 +92,34 @@ diff draw_line(rgba r, vec2D<int> a, vec2D<int> b, rect<int> bound) {
 handle* handle_new() { return new handle; }
 void handle_free(handle* hnd) { delete hnd; };
 
-
 void op_cancel(handle* hnd) { apply_diff(hnd->canvas, hnd->history.revert()); }
 void op_finalize(handle* hnd) { hnd->history.finalize(); }
 
-void cursor_press(handle* hnd, int x, int y) {
+void cursor_press(handle* hnd, vec2i p) {
 	hnd->tool_active = true;
 	switch (hnd->active_tool) {
 	case tool::pencil:
-		pencil(hnd, hnd->active_color, x, y, x, y);
+		pencil(hnd, hnd->active_color, p, p);
 		break;
 	case tool::fill:
-		fill(hnd, hnd->active_color, x, y);
+		fill(hnd, hnd->active_color, p);
 		break;
 	default:
 		break;
 	}
-	hnd->last_pos = vec2D<int>{x, y};
+	hnd->last_pos = p;
 }
 
-void cursor_drag(handle* hnd, int x, int y) {
+void cursor_drag(handle* hnd, vec2i p) {
 	if (hnd->tool_active) {
 		switch (hnd->active_tool) {
 		case tool::pencil:
-			pencil(hnd, hnd->active_color, hnd->last_pos.x, hnd->last_pos.y, x, y);
+			pencil(hnd, hnd->active_color, hnd->last_pos, p);
 			break;
 		default:
 			break;
 		}
-		hnd->last_pos = vec2D<int>{x, y};
+		hnd->last_pos = p;
 	}
 }
 
@@ -131,30 +130,30 @@ void cursor_release(handle* hnd) {
 
 void tool_select(handle* hnd, tool t) { hnd->active_tool = t; }
 
-void pencil(handle* hnd, u8 pal_idx, int x1, int y1, int x2, int y2) {
-	rect<int> bounds{{0, 0}, hnd->canvas.size().to<int>()};
-	diff d = draw_line(hnd->palette[pal_idx], {x1, y1}, {x2, y2}, bounds);
+void pencil(handle* hnd, u8 pal_idx, vec2i p1, vec2i p2) {
+	rect bounds{{0, 0}, hnd->canvas.size().to<int>()};
+	diff d = draw_line(hnd->palette[pal_idx], p1, p2, bounds);
 	hnd->history.push(apply_diff(hnd->canvas, d));
 }
 
-void fill(handle* hnd, u8 pal_idx, int x1, int y1) {
+void fill(handle* hnd, u8 pal_idx, vec2i p1) {
 	diff d;
 	selection visited;
 	selection to_explore;
-	rgba scan_color = hnd->canvas.get({x1, y1});
+	rgba scan_color = hnd->canvas.get(p1.to<unsigned>());
 
-	to_explore.mark({x1, y1});
+	to_explore.mark(p1.to<unsigned>());
 	while (!to_explore.empty()) {
-		vec2D<u16> p = *(to_explore.begin());
+		vec2u p = *(to_explore.begin());
 		to_explore.clear(p);
 		visited.mark(p);
 
-		vec2D<int> size = hnd->canvas.size().to<int>();
-		if (!rect<int>{{0, 0}, size}.contains(p.to<int>()))
+		vec2i size = hnd->canvas.size().to<int>();
+		if (!rect{{0, 0}, size}.contains(p.to<int>()))
 			break;
 
 		d.insert(p, hnd->palette[pal_idx]);
-		vec2D<u16> neighbors[4] = {
+		vec2u neighbors[4] = {
 			{p.x, p.y - 1}, {p.x, p.y + 1},
 			{p.x - 1, p.y}, {p.x + 1, p.y}
 		};
@@ -171,11 +170,8 @@ void pal_select(handle* hnd, u8 pal_idx) { hnd->active_color = pal_idx; }
 void pal_set(handle* hnd, u8 pal_idx, rgba r) { hnd->palette[pal_idx] = r; }
 rgba pal_get(handle* hnd, u8 pal_idx) { return hnd->palette[pal_idx]; }
 
-void image_new(handle* hnd, u16 w, u16 h) { hnd->canvas = image_t({w, h}); }
-void image_size(handle* hnd, u16* w, u16* h) {
-	*w = hnd->canvas.size().x;
-	*h = hnd->canvas.size().y;
-}
+void image_new(handle* hnd, vec2u size) { hnd->canvas = image_t(size); }
+vec2u image_size(handle* hnd) { return hnd->canvas.size(); }
 const f32* image_data(handle* hnd) { return hnd->canvas.ptr(); }
 
 void undo(handle* hnd) { hnd->history.undo(hnd->canvas); }
