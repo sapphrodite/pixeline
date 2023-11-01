@@ -68,7 +68,7 @@ public:
 	int y_axis;
 	hsv hsv_color;
 
-	vec2D<f32> steps = vec2D<f32>(1, 1);
+	vec2<f32> steps = vec2<f32>(1, 1);
 	u8 grid_size = 7;
 signals:
 	void value_changed(hsv);

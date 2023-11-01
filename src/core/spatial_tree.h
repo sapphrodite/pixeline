@@ -33,7 +33,7 @@ public:
 		bool operator!=(const iterator& rhs) const = default;
 		const T* operator*() const { return &_ctr->_chunks[chunk_idx]; }
 
-		vec2D<u16> chunk_origin() const { return _ctr->chunk_origin(_path); }
+		vec2u chunk_origin() const { return _ctr->chunk_origin(_path); }
 		iterator operator++() {
 			_path = bitstring<u32>(_path.value() + 1);
 			load_chunk();
@@ -83,16 +83,16 @@ public:
 	};
 
 
-	size_t index_into_chunk(vec2D<u16> pos) { return (pos.x % chunk_width) + ((pos.y % chunk_width) * chunk_width); }
+	size_t index_into_chunk(vec2u pos) { return (pos.x % chunk_width) + ((pos.y % chunk_width) * chunk_width); }
 
-	bool inbounds(vec2D<u16> pos) {
+	bool inbounds(vec2u pos) {
 		// how many nodes long is the tree? 
 		uint16_t total_width = chunk_width * (1 << (step_width * _depth));
 		return (pos.x >= origin.x && pos.y >= origin.y &&
 			pos.x < origin.x + total_width && pos.y < origin.y + total_width);
 	}
 
-	T* insert_at(vec2D<u16> pos)  {
+	T* insert_at(vec2u pos)  {
 		while (!inbounds(pos)) {
 			_depth++;
 			uint16_t total_width = chunk_width * (1 << (step_width * _depth));
@@ -105,11 +105,11 @@ public:
 	origin = pos;
 			}
 
-			origin = vec2D<u16>(origin.x & ~(total_width - 1), origin.y & ~(total_width - 1));
+			origin = vec2u(origin.x & ~(total_width - 1), origin.y & ~(total_width - 1));
 			_root = new_root;
 		}
 
-		pos = vec2D<u16>(pos.x - origin.x, pos.y - origin.y);
+		pos = vec2u(pos.x - origin.x, pos.y - origin.y);
 
 		path_record path = path_to(pos);
 		node current = _root;
@@ -126,7 +126,7 @@ public:
 		return &_chunks[current];
 	}
 
-	T* chunk_at(vec2D<u16> pos) {
+	T* chunk_at(vec2u pos) {
 		if (!inbounds(pos))
 			return nullptr;
 
@@ -167,19 +167,19 @@ private:
 	void path_writestep(path_record& p, size_t lvl, size_t step) const { p.write(mask::packed(_depth - 1 - lvl, 2 * step_width), step); }
 	size_t path_getstep(path_record p, size_t lvl) const { return p.get(mask::packed(_depth - 1 - lvl, 2 * step_width)); }
 
-	path_record path_to(vec2D<u16> dest) const {
-		dest = vec2D<u16>(dest.x / chunk_width, dest.y / chunk_width);
+	path_record path_to(vec2u dest) const {
+		dest = vec2u(dest.x / chunk_width, dest.y / chunk_width);
 		path_record p = path_record(0);
 		size_t bmask = node_width - 1;
 		for (int i = 0; i < _depth; i++) {
 			path_writestep(p, _depth - 1 - i, (dest.x & bmask) | ((dest.y & bmask) << step_width));
-			dest = vec2D<u16>(dest.x >> step_width, dest.y >> step_width);
+			dest = vec2u(dest.x >> step_width, dest.y >> step_width);
 		}
 		return p;
 	}
 
-	vec2D<u16> chunk_origin(path_record p) const {
-		vec2D<u16> pos = origin;
+	vec2u chunk_origin(path_record p) const {
+		vec2u pos = origin;
 		size_t shift_coeff = chunk_width;
 		size_t bmask = node_width - 1; 
 		for (int i = 0; i < _depth; i++) {
@@ -195,7 +195,7 @@ private:
 	node _root = node(-1);
 	path_record recent_path;
 	
-	vec2D<uint16_t> origin = vec2D<u16>(-1, -1);
+	vec2u origin = vec2u(-1, -1);
 	size_t _depth = -1;
 };
 

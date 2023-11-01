@@ -78,7 +78,7 @@ private:
 
 class image_t {
 public:
-	image_t(image_format fmt, vec2D<u16> size);
+	image_t(image_format fmt, vec2u size);
 	image_t();
 	~image_t();
 	image_t& operator=(image_t&& other);
@@ -87,11 +87,11 @@ public:
 	static image_t from_file(const char* filename);
 	image_t convert_to(image_format dstfmt);
 
-	rgba at(vec2D<u16>);
+	rgba at(vec2u);
 	rgba at(size_t);
 	f32* buf();
 
-	vec2D<u16> size();
+	vec2u size();
 private:
 	struct pimpl;
 	std::unique_ptr<pimpl> data;

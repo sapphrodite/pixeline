@@ -17,11 +17,11 @@ public:
 private:
 	handle* hnd;
 	u8 _zoom;
-	vec2D<i32> last_pos;
+	vec2i last_pos;
 
-	vec2D<u16> size();
-	::rect<u16> get_canvas_box();
-	vec2D<i32> imagespace_coords(QMouseEvent*);
+	vec2u size();
+	::rect get_canvas_box();
+	vec2i imagespace_coords(QMouseEvent*);
 };
 
 #endif // CANVAS_H

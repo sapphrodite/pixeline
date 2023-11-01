@@ -17,17 +17,17 @@ enum class tool {
 
 void op_cancel(handle*);
 void op_finalize(handle*);
-bool cursorpress(handle*, int x, int y, unsigned flags);
-bool cursordrag(handle*, int x1, int y1, int x2, int y2, unsigned flags);
+bool cursorpress(handle*, vec2i p, unsigned flags);
+bool cursordrag(handle*, vec2i p1, vec2i p2, unsigned flags);
 bool cursorrelease(handle*, unsigned flags);
 
 void set_tool(handle*, tool t);
-void pencil(handle*, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
-void fill(handle*, palette_idx c, int x, int y, bool global);
+void pencil(handle*, palette_idx c, vec2i p1, vec2i p2);
+void fill(handle*, palette_idx c, vec2i p, bool global);
 
-void new_image(handle*, uint16_t w, uint16_t h);
+void new_image(handle*, vec2u size);
 void load_image(handle*, const char* filename);
-void get_imagesize(handle*, uint16_t* w, uint16_t* h);
+vec2u get_imagesize(handle*);
 const f32* imagedata(handle*);
 
 #define PALETTE_SIZE 256

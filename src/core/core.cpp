@@ -40,16 +40,16 @@ public:
 			apply_diff(i, c.diffs[i]);
 	}
 
-	void new_image(uint16_t w, uint16_t h) {
+	void new_image(vec2u size) {
 		// TODO - this should clear all existing data and history
-		layers.emplace_back(image_t(canvas_fmt(), vec2D<u16>(w, h)));
-		composite = image_t(canvas_fmt(), vec2D<u16>(w, h));
-		bounds = rect<int32_t>{{0, 0}, {w, h}};
+		layers.emplace_back(image_t(canvas_fmt(), size));
+		composite = image_t(canvas_fmt(), size);
+		bounds = rect{{0, 0}, size.to<int>()};
 		composite_rect(bounds.top_left(), bounds.bottom_right());
 	}
 
 	void set_img(image_t img) {
-		bounds = rect<int32_t>{{0, 0}, img.size().to<int>()};
+		bounds = rect{{0, 0}, img.size().to<int>()};
 		composite = image_t(canvas_fmt(), img.size());
 		layers.emplace_back(image_t());
 		std::swap(img, layers.back());
@@ -62,7 +62,7 @@ public:
 	}
 
 	void add_layer() {
-		layers.emplace_back(image_t(canvas_fmt(), bounds.size.to<u16>()));
+		layers.emplace_back(image_t(canvas_fmt(), bounds.size.to<u32>()));
 	}
 
 	void reorder_layer(int old_pos, int new_pos) {
@@ -74,8 +74,8 @@ public:
 	}
 
 	const f32* ptr() { return composite.buf(); }
-	rgba at(vec2D<u16> pos) { return layers[active_layer].at(pos); }
-	rect<int32_t> get_bounds() { return bounds; }
+	rgba at(vec2u pos) { return layers[active_layer].at(pos); }
+	rect get_bounds() { return bounds; }
 
 	commit& get_commit() { return undo_commit; }
 	void finalize() { undo_commit = commit(); }
@@ -86,16 +86,16 @@ private:
 	std::vector<image_t> layers;
 	image_t composite;
 	commit undo_commit;
-	rect<int32_t> bounds;
+	rect bounds;
 
-	void composite_pixel(vec2D<int> px) {
+	void composite_pixel(vec2i px) {
 		// TODO - this is inefficient
-		rgba a = layers[0].at(px.to<u16>());
+		rgba a = layers[0].at(px.to<u32>());
 		for (int i = 1; i < layers.size(); i++) {
 			if (a.a() >= 1)
 				break;
 
-			rgba b = layers[i].at(px.to<u16>());
+			rgba b = layers[i].at(px.to<u32>());
 			rgba out;
 			out[3] = a.a()  + b.a() * (1.0 - a.a());
 			for (int j = 0; j < 3; j++) {
@@ -114,7 +114,7 @@ private:
 		ptr[addr * 4 + 3] = a.a();
 	}
 
-	void composite_rect(vec2D<int> tl, vec2D<int> br) {
+	void composite_rect(vec2i tl, vec2i br) {
 		for (int x = tl.x; x < br.x; x++) {
 			for (int y = tl.y; y < br.y; y++) {
 				composite_pixel({x, y});
@@ -159,17 +159,17 @@ struct handle {
 };
 
 
-void add_pixel(rgba r, vec2D<int32_t> px, rect<int32_t> bound, diff& d) {
+void add_pixel(rgba r, vec2i px, rect bound, diff& d) {
     if (px.x >= bound.top_left().x && px.y >= bound.top_left().y 
         && px.y < bound.bottom_right().y && px.x < bound.bottom_right().x)
-   d.insert(vec2D<u16>(px.x, px.y), r);
+   d.insert(vec2u(px.x, px.y), r);
 }
 
 // Brensham's algorithm to draw line from a to b
-diff draw_line(rgba r, vec2D<int32_t> a, vec2D<int32_t> b, rect<int32_t> bound) {
+diff draw_line(rgba r, vec2i a, vec2i b, rect bound) {
     diff d;
-    vec2D<int32_t> delta(abs(b.x - a.x), -abs(b.y - a.y));
-    vec2D<int32_t> sign(a.x < b.x ? 1 : -1, a.y < b.y ? 1 : -1);
+    vec2i delta(abs(b.x - a.x), -abs(b.y - a.y));
+    vec2i sign(a.x < b.x ? 1 : -1, a.y < b.y ? 1 : -1);
     int32_t error = delta.x + delta.y;
 
     for (;;) {
@@ -206,15 +206,15 @@ void op_finalize(handle* hnd) {
 	hnd->canvas.finalize();
 }
 
-bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
+bool cursorpress(handle* hnd, vec2i p, unsigned flags) {
 	if (true) {
 		hnd->tool_active = true;
 		switch (hnd->active_tool) {
 		case tool::pencil:
-			pencil(hnd, hnd->active_color, x, y, x, y);
+			pencil(hnd, hnd->active_color, p, p);
 			break;
 		case tool::fill:
-			fill(hnd, hnd->active_color, x, y, false);
+			fill(hnd, hnd->active_color, p, false);
 			break;
 		default:
 			break;
@@ -225,11 +225,11 @@ bool cursorpress(handle* hnd, int x, int y, unsigned flags) {
 	}
 }
 
-bool cursordrag(handle* hnd, int x1, int y1, int x2, int y2, unsigned flags) {
+bool cursordrag(handle* hnd, vec2i p1, vec2i p2, unsigned flags) {
 	if (hnd->tool_active) {
 		switch (hnd->active_tool) {
 		case tool::pencil:
-			pencil(hnd, hnd->active_color, x1, y1, x2, y2);
+			pencil(hnd, hnd->active_color, p1, p2);
 			break;
 		default:
 			break;
@@ -246,34 +246,34 @@ void set_tool(handle* hnd, tool t) {
 	hnd->active_tool = t;
 }
 
-void pencil(handle* hnd, palette_idx c, int32_t x1, int32_t y1, int32_t x2, int32_t y2) {
-	diff d = draw_line(hnd->palette[c], {x1, y1}, {x2, y2}, hnd->canvas.get_bounds());
+void pencil(handle* hnd, palette_idx c, vec2i p1, vec2i p2) {
+	diff d = draw_line(hnd->palette[c], p1, p2, hnd->canvas.get_bounds());
 	hnd->canvas.apply_diff(hnd->canvas.active_layer, d);
 }
 
-void fill(handle* hnd, palette_idx c, int x1, int y1, bool global) {
-	vec2D<int> size = hnd->canvas.get_bounds().size;
+void fill(handle* hnd, palette_idx c, vec2i p, bool global) {
+	vec2u size = hnd->canvas.get_bounds().size.to<u32>();
 	selection visited;
 	selection to_explore;
 	diff d;
 	rgba fill_color = hnd->palette[c];
-	rgba scan_color = hnd->canvas.at({x1, y1});
+	rgba scan_color = hnd->canvas.at(p.to<u32>());
 
-	to_explore.mark(vec2D<u16>{x1, y1});
+	to_explore.mark(p.to<u32>());
 	while (!to_explore.empty()) {
-		vec2D<u16> p = *(to_explore.begin());
+		vec2u p = *(to_explore.begin());
 		to_explore.clear(p);
 		visited.mark(p);
 
 		add_pixel(fill_color, p.to<int>(), hnd->canvas.get_bounds(), d);
 
-		for (int y = std::max(p.y - 1, 0); y < std::min(p.y + 2, size.y); y++) {
+		for (int y = std::max(p.y - 1, 0u); y < std::min(p.y + 2, size.y + 0); y++) {
 			if (!visited.exists({p.x, y}) && hnd->canvas.at({p.x, y}) == scan_color)
-				to_explore.mark(vec2D<u16>{p.x, y});
+				to_explore.mark(vec2u{p.x, y});
 		}
-		for (int x = std::max(p.x - 1, 0); x < std::min(p.x + 2, size.x); x++) {
+		for (int x = std::max(p.x - 1, 0u); x < std::min(p.x + 2, size.x + 0); x++) {
 			if (!visited.exists({x, p.y}) && hnd->canvas.at({x, p.y}) == scan_color)
-				to_explore.mark(vec2D<u16>{x, p.y});
+				to_explore.mark(vec2u{x, p.y});
 		}
 	}
 	hnd->canvas.apply_diff(hnd->canvas.active_layer, d);
@@ -293,16 +293,13 @@ rgba get_pal_color(handle* hnd, palette_idx c) {
 	return r;
 }
 
-void new_image(handle* hnd, uint16_t w, uint16_t h) { hnd->canvas.new_image(w, h); } 
+void new_image(handle* hnd, vec2u size) { hnd->canvas.new_image(size); } 
 void load_image(handle* hnd, const char* filename) {
 	image_t img = image_t::from_file(filename);
 	hnd->canvas.set_img(img.convert_to(layer::canvas_fmt()));
 }
 
-void get_imagesize(handle* hnd, uint16_t* w, uint16_t* h) { 
-	*w = hnd->canvas.get_bounds().size.x;
-	*h = hnd->canvas.get_bounds().size.y;
-}
+vec2u get_imagesize(handle* hnd) { return hnd->canvas.get_bounds().size.to<u32>(); }
 const f32* imagedata(handle* hnd) { return hnd->canvas.ptr(); }
 
 

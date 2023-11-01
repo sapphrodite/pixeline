@@ -43,10 +43,10 @@ public:
 			return (void*) buf_at<T>(idx); \
 		else
 
-	vec2D<u16> size;
+	vec2u size;
 	image_format fmt;
 
-	pimpl(image_format fmt_in, vec2D<u16> size_in) : size(size_in), fmt(fmt_in) {
+	pimpl(image_format fmt_in, vec2u size_in) : size(size_in), fmt(fmt_in) {
 		size_t len = fmt.size_of(size.x, size.y);
 		BUFTYPES(INIT_CALL)
 			throw std::logic_error("Unknown buftype");
@@ -71,7 +71,7 @@ image_t::~image_t() = default;
 image_t::image_t() = default;
 image_t::image_t(image_t&& other) = default;
 image_t& image_t::operator=(image_t&& other) = default;
-image_t::image_t(image_format fmt, vec2D<u16> size) {
+image_t::image_t(image_format fmt, vec2u size) {
 	data = std::make_unique<pimpl>(pimpl(fmt, size));
 }
 
@@ -136,7 +136,7 @@ image_t image_t::from_file(const char* filename) {
 	image_format::buf_t buftype = bpp / nc == 16 ? image_format::buf_t::u16 : image_format::buf_t::u8;
 
 	image_format fmt(buftype, nc);
-	image_t img(fmt, vec2D<u16>(width, height));
+	image_t img(fmt, vec2u(width, height));
 
 	// What in the actual fuck is this? thanks libpng
 	std::vector<png_byte*> ptr_storage(height);
@@ -162,7 +162,7 @@ image_t image_t::convert_to(image_format dstfmt) {
 	return dst;
 }
 
-rgba image_t::at(vec2D<u16> pos) { return at(pos.x + (pos.y * size().x)); }
+rgba image_t::at(vec2u pos) { return at(pos.x + (pos.y * size().x)); }
 rgba image_t::at(size_t idx) {
 	if (data.get()->fmt.is(image_format::buf_t::f32) && data.get()->fmt.num_channels() >= 3) {
 		int nc = data.get()->fmt.num_channels();
@@ -179,7 +179,7 @@ rgba image_t::at(size_t idx) {
 
 f32* image_t::buf() { return data.get()->buf_at<f32>(0); }
 
-vec2D<u16> image_t::size() { return data.get()->size; }
+vec2u image_t::size() { return data.get()->size; }
 
 
 rgba rgba::from(const hsv& a) {

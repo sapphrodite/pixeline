@@ -129,8 +129,8 @@ void color_grid::update_color(hsv new_color) {
 }
 
 void color_grid::mouseDoubleClickEvent(QMouseEvent * e) {
-	vec2D<u16> pps(width() / grid_size, height() / grid_size);
-	vec2D<i16> square((e->x() / pps.x) - (grid_size / 2), (e->y() / pps.y) - (grid_size / 2));
+	vec2u pps(width() / grid_size, height() / grid_size);
+	vec2i square((e->x() / pps.x) - (grid_size / 2), (e->y() / pps.y) - (grid_size / 2));
 
 	hsv itr_color = hsv_color;
 	itr_color[x_axis] += steps.x * square.x;
@@ -147,13 +147,13 @@ void color_grid::paintEvent(QPaintEvent*) {
 		painter.setPen(Qt::NoPen);
 	}
 
-	steps = vec2D<f32>(p->xstep_box->value(), p->ystep_box->value());
+	steps = vec2<f32>(p->xstep_box->value(), p->ystep_box->value());
 	hsv itr_color = hsv_color;
 	itr_color[x_axis] = std::clamp(itr_color[x_axis] - steps.x * (grid_size / 2), 0.0f, (hsv::max()[x_axis]));
 	itr_color[y_axis] = std::clamp(itr_color[y_axis] - steps.y * (grid_size / 2), 0.0f, (hsv::max()[y_axis]));
 	f32 x_base = itr_color[x_axis];
 
-	vec2D<u16> div_size(width() / grid_size, height() / grid_size);
+	vec2u div_size(width() / grid_size, height() / grid_size);
 	for (int y = 0; y < grid_size; y++) {
 		for (int x = 0; x < grid_size; x++) {
 			itr_color[x_axis] = std::min(itr_color[x_axis] + steps.x, (hsv::max()[x_axis]));

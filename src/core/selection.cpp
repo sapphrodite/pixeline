@@ -2,18 +2,18 @@
 #include <math.h>
 
 
-void selection::mark(vec2D<u16> pos) {
+void selection::mark(vec2u pos) {
 	auto* chunk = ctr.insert_at(pos);
 	chunk->set(ctr.index_into_chunk(pos));
 }
 	//assertion(n.node_type() == node::type::chunk, "Error accessing node\n");
 
-void selection::clear(vec2D<u16> pos) {
+void selection::clear(vec2u pos) {
 	auto* chunk = ctr.chunk_at(pos);
 	chunk->clear(ctr.index_into_chunk(pos));
 }
 
-bool selection::exists(vec2D<u16> pos) {
+bool selection::exists(vec2u pos) {
 	auto* chunk = ctr.chunk_at(pos);
 	if (!chunk)
 		return false;
@@ -22,9 +22,9 @@ bool selection::exists(vec2D<u16> pos) {
 
 bool selection::empty() { return ctr.empty(); }
 
-vec2D<u16> selection::iterator::operator*() const {
-	vec2D<u16> pos = tree_itr.chunk_origin();
-	return vec2D<u16>(pos.x + ((*bitr) % tree_type::chunk_width), pos.y + ((*bitr) / tree_type::chunk_width));
+vec2u selection::iterator::operator*() const {
+	vec2u pos = tree_itr.chunk_origin();
+	return vec2u(pos.x + ((*bitr) % tree_type::chunk_width), pos.y + ((*bitr) / tree_type::chunk_width));
 }
 
 selection::iterator selection::iterator::operator++() {
@@ -60,27 +60,27 @@ diff_chunk::iterator::iterator(const diff_chunk* ctr, chunk_type::iterator bitr,
 		: ctr(ctr), bitr(bitr) {}
 
 
-void diff::insert(vec2D<u16> pos, rgba color) {
+void diff::insert(vec2u pos, rgba color) {
 	auto* chunk = ctr.insert_at(pos);
 	chunk->insert(ctr.index_into_chunk(pos), color);
 }
 
-void diff::clear(vec2D<u16> pos) {
+void diff::clear(vec2u pos) {
 //	auto* chunk = ctr.chunk_at(pos);
 //	chunk->clear(ctr.index_into_chunk(pos));
 }
 
-bool diff::exists(vec2D<u16> pos) {
+bool diff::exists(vec2u pos) {
 	auto* chunk = ctr.chunk_at(pos);
 	if (!chunk)
 		return false;
 	return chunk->exists(ctr.index_into_chunk(pos));
 }
 
-std::pair<vec2D<u16>, rgba> diff::iterator::operator*() const {
+std::pair<vec2u, rgba> diff::iterator::operator*() const {
 	size_t idx = (*bitr).first;
-	vec2D<u16> origin = tree_itr.chunk_origin();
-	origin = vec2D<u16>(origin.x + (idx % tree_type::chunk_width), origin.y + (idx / tree_type::chunk_width));
+	vec2u origin = tree_itr.chunk_origin();
+	origin = vec2u(origin.x + (idx % tree_type::chunk_width), origin.y + (idx / tree_type::chunk_width));
 	return std::make_pair(origin, (*bitr).second);
 }
 

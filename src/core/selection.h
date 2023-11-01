@@ -12,16 +12,16 @@ class selection {
 	using chunk_type = bitarray<256>;
 	using tree_type = spatial_tree<chunk_type>;
 public:
-	void mark(vec2D<u16> pos);
-	void clear(vec2D<u16> pos);
-	bool exists(vec2D<u16> pos);
+	void mark(vec2u pos);
+	void clear(vec2u pos);
+	bool exists(vec2u pos);
 	bool empty();
 
 	class iterator {
 	public:
 		bool operator!=(const iterator& rhs) const = default; 
 		bool operator==(const iterator& rhs) const = default;
-		vec2D<u16> operator*() const;
+		vec2u operator*() const;
 		iterator operator++();
 	private:
 		friend class selection;
@@ -75,16 +75,16 @@ private:
 class diff {
 	using tree_type = spatial_tree<diff_chunk>;
 public:
-	void insert(vec2D<u16> pos, rgba color);
-	void clear(vec2D<u16> pos);
-	bool exists(vec2D<u16> pos);
+	void insert(vec2u pos, rgba color);
+	void clear(vec2u pos);
+	bool exists(vec2u pos);
 
 	
 	class iterator {
 	public:
 		bool operator!=(const iterator& rhs) const = default; 
 		bool operator==(const iterator& rhs) const = default;
-		std::pair<vec2D<u16>, rgba> operator*() const;
+		std::pair<vec2u, rgba> operator*() const;
 		iterator operator++();
 	private:
 		friend class diff;

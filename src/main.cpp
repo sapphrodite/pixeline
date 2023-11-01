@@ -28,7 +28,7 @@ bool test_mark_clear_exists(selection t) {
 	return !t.exists({1, 3}) && mark_passed;
 }
 
-selection fill_sel_forwards(vec2D<u16> bounds) {
+selection fill_sel_forwards(vec2u bounds) {
 	selection s;
 	for (int y = 0; y < bounds.y; y++)
 		for (int x = 0; x < bounds.x; x++)
@@ -36,7 +36,7 @@ selection fill_sel_forwards(vec2D<u16> bounds) {
 	return s;
 }
 
-bool fill_sel_backwards(vec2D<u16> bounds) {
+bool fill_sel_backwards(vec2u bounds) {
 	printf("Testing backwards selection fills...\n");
 	selection s;
 	for (int y = bounds.y - 1; y >= 0; y--)
@@ -53,7 +53,7 @@ bool fill_sel_backwards(vec2D<u16> bounds) {
 }
 
 bool perf_test() {
-	vec2D<u16> bounds(256, 256);
+	vec2u bounds(256, 256);
 	auto t = fill_sel_forwards(bounds);
 
 	size_t num_elems = 0;
@@ -67,7 +67,7 @@ bool perf_test() {
 
 
 bool color_test() {
-	vec2D<u16> bounds(16, 16);
+	vec2u bounds(16, 16);
 	diff t;
 
 	for (int y = 0; y < bounds.y; y++) {
@@ -141,7 +141,7 @@ QWidget* leftpane(palette& p) {
 int main(int argc, char *argv[]) {
 	handle* hnd = handle_alloc();
 	set_tool(hnd, tool::pencil);
-	new_image(hnd, 100, 100);
+	new_image(hnd, {100, 100});
 
 	tests();
 	QApplication a(argc, argv);
